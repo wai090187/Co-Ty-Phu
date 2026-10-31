@@ -17,7 +17,7 @@ import { TargetPlayerModal } from './components/Modals/TargetPlayerModal';
 import { PermanentTriggerModal } from './components/Modals/PermanentTriggerModal';
 import { AiActionModal } from './components/Modals/AiActionModal';
 import { GameOverModal } from './components/Modals/GameOverModal';
-import { AIDifficulty, Character, Player } from './types/game';
+import { AIDifficulty, Character, Player, ConsumableAbility, PermanentAbility } from './types/game';
 
 const DEFAULT_PLAYER_COLORS = [
   '#DC2626', // Red
@@ -50,6 +50,8 @@ export default function App() {
     chestDeck,
     consumableShop,
     permanentShop,
+    offeredStationAbilities,
+    offeredUtilityAbilities,
     activePropertyModalTile,
     isLandingPropertyAction,
     setIsLandingPropertyAction,
@@ -518,7 +520,7 @@ export default function App() {
         <StationAbilityModal
           tile={activeStationModal}
           player={activePlayer!}
-          abilities={consumableShop}
+          abilities={offeredStationAbilities.length > 0 ? offeredStationAbilities : consumableShop}
           onBuyAbility={buyConsumableAbility}
           onClose={() => setActiveStationModal(null)}
           hasVipDiscount={activePlayer?.permanentAbilities.includes('perm-station-vip')}
@@ -530,7 +532,8 @@ export default function App() {
         <UtilityAbilityModal
           tile={activeUtilityModal}
           player={activePlayer!}
-          abilities={permanentShop}
+          abilities={offeredUtilityAbilities.length > 0 ? offeredUtilityAbilities : permanentShop}
+          allPermanents={permanentShop}
           onBuyAbility={buyPermanentAbility}
           onSellAbility={sellPermanentAbility}
           onClose={() => setActiveUtilityModal(null)}
@@ -577,8 +580,8 @@ export default function App() {
           permanentShop={permanentShop}
           onUpdateConsumableQuantity={updateConsumableQuantity}
           onUpdatePermanentQuantity={updatePermanentQuantity}
-          onAddCustomConsumable={ab => setConsumableShop(prev => [...prev, ab])}
-          onAddCustomPermanent={ab => setPermanentShop(prev => [...prev, ab])}
+          onAddCustomConsumable={(ab: ConsumableAbility) => setConsumableShop((prev: ConsumableAbility[]) => [...prev, ab])}
+          onAddCustomPermanent={(ab: PermanentAbility) => setPermanentShop((prev: PermanentAbility[]) => [...prev, ab])}
           onClose={() => setShowSettings(false)}
         />
       )}

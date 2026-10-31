@@ -1802,6 +1802,7 @@ export const useMonopolyGame = () => {
     setChanceDeck,
     setChestDeck,
     setConsumableShop,
+    setPermanentShop,
     updateCardQuantity,
     updateConsumableQuantity,
     updatePermanentQuantity,
