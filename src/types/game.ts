@@ -202,3 +202,11 @@ export interface LogEntry {
   type: 'info' | 'money' | 'jail' | 'action' | 'ability' | 'property';
   timestamp: number;
 }
+
+export interface SetupPlayerConfig {
+  name: string;
+  isAI: boolean;
+  aiLevel?: AIDifficulty;
+  characterId: string;
+  color: string;
+}
