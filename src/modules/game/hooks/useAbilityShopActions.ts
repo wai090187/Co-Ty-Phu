@@ -7,6 +7,10 @@ interface AbilityContext {
   chanceDeck: Card[];
   chestDeck: Card[];
   setPlayers: React.Dispatch<React.SetStateAction<Player[]>>;
+  setConsumableShop: React.Dispatch<React.SetStateAction<ConsumableAbility[]>>;
+  setPermanentShop: React.Dispatch<React.SetStateAction<PermanentAbility[]>>;
+  setChanceDeck?: React.Dispatch<React.SetStateAction<Card[]>>;
+  setChestDeck?: React.Dispatch<React.SetStateAction<Card[]>>;
   setActiveStationModal: (t: any) => void;
   setActiveUtilityModal: (t: any) => void;
   setActiveTargetAbility: (a: any) => void;
@@ -45,6 +49,18 @@ export const useAbilityShopActions = (ctx: AbilityContext) => {
         })
       );
 
+      ctx.setConsumableShop(shop =>
+        shop.map(a => {
+          if (a.id === ability.id) {
+            return { ...a, quantity: Math.max(0, (a.quantity ?? 1) - 1) };
+          }
+          if (discardAbilityId && a.id === discardAbilityId) {
+            return { ...a, quantity: (a.quantity ?? 0) + 1 };
+          }
+          return a;
+        })
+      );
+
       ctx.triggerCashTransfer(ctx.activePlayer.id, [], finalCost, `Mua kỹ năng [${ability.name}]`);
       ctx.addLog(`⚡ ${ctx.activePlayer.name} mua Kỹ Năng [${ability.name}] tại Bến Xe (-${finalCost}đ)`, 'ability');
       ctx.setActiveStationModal(null);
@@ -64,6 +80,9 @@ export const useAbilityShopActions = (ctx: AbilityContext) => {
         }
 
         sounds.ability();
+        ctx.setPermanentShop(shop =>
+          shop.map(a => (a.id === ability.id ? { ...a, quantity: 0 } : a))
+        );
         ctx.triggerCashTransfer(ctx.activePlayer!.id, [], ability.cost, `Mua [${ability.name}]`);
         ctx.addLog(`👑 ${ctx.activePlayer!.name} mua Năng Lực Vĩnh Viễn [${ability.name}] (-${ability.cost}đ)`, 'ability');
 
@@ -90,6 +109,9 @@ export const useAbilityShopActions = (ctx: AbilityContext) => {
       const refund = Math.floor(ability.cost * 0.7);
 
       sounds.cash();
+      ctx.setPermanentShop(shop =>
+        shop.map(a => (a.id === ability.id ? { ...a, quantity: (a.quantity ?? 0) + 1 } : a))
+      );
       ctx.setPlayers(prev =>
         prev.map(p => {
           if (p.id === ctx.activePlayer!.id) {
@@ -145,6 +167,10 @@ export const useAbilityShopActions = (ctx: AbilityContext) => {
         }
 
         p.consumableAbilities = p.consumableAbilities.filter(id => id !== ability.id);
+
+        ctx.setConsumableShop(shop =>
+          shop.map(a => (a.id === ability.id ? { ...a, quantity: (a.quantity ?? 0) + 1 } : a))
+        );
 
         switch (ability.effectType) {
           case 'dice_boost':

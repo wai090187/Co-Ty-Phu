@@ -88,6 +88,51 @@ export const useCardActions = (ctx: CardActionContext) => {
             }, 300);
             break;
           }
+          case 'move_relative': {
+            const steps = card.value || 0;
+            const newPos = (p.position + steps + 40) % 40;
+            p.position = newPos;
+            sounds.step();
+            ctx.addLog(
+              `🚶 [${card.title}] ${p.name} ${steps < 0 ? `lùi lại ${Math.abs(steps)} ô` : `tiến lên ${steps} ô`} đến ô số ${newPos}!`,
+              'info'
+            );
+            setTimeout(() => {
+              ctx.resolveTileLanding(p.id, newPos, steps);
+            }, 300);
+            break;
+          }
+          case 'get_out_of_jail': {
+            p.getOutOfJailCards = (p.getOutOfJailCards || 0) + 1;
+            sounds.ability();
+            ctx.addLog(`🕊️ [${card.title}] ${p.name} nhận được 1 Thẻ Tha Bổng Ra Tù / Miễn Điều Tra!`, 'info');
+            break;
+          }
+          case 'house_repair': {
+            let totalHouses = 0;
+            let totalHotels = 0;
+            Object.values(p.houses || {}).forEach(h => {
+              if (h === 5) totalHotels++;
+              else if (h > 0) totalHouses += h;
+            });
+            const totalRepair = totalHouses * 25 + totalHotels * 100;
+            if (totalRepair > 0) {
+              if (p.cash >= totalRepair) {
+                p.cash -= totalRepair;
+                sounds.cash();
+                ctx.triggerCashTransfer(p.id, [], totalRepair, 'Chi phí sửa chữa nhà cửa');
+                ctx.addLog(
+                  `🔨 [Sửa Chữa Nhà] ${p.name} trả ${totalRepair}đ bảo trì (${totalHouses} nhà, ${totalHotels} khách sạn)`,
+                  'property'
+                );
+              } else {
+                ctx.handleBankrupt(p);
+              }
+            } else {
+              ctx.addLog(`🔨 [Sửa Chữa Nhà] ${p.name} không có bất động sản nào cần tu sửa!`, 'property');
+            }
+            break;
+          }
           case 'go_to_jail': {
             p.position = 10;
             p.inJail = true;

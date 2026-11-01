@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Player, Tile } from '../../../types/game';
+import { Player, Tile, ConsumableAbility } from '../../../types/game';
 import { sounds } from '../../../utils/soundEngine';
 import { canPlayerPayBailCheck } from '../../property/utils/rentCalculator';
 
@@ -11,6 +11,7 @@ interface PropertyOpsContext {
   settings: any;
   setPlayers: React.Dispatch<React.SetStateAction<Player[]>>;
   setUpgradesThisTurn: React.Dispatch<React.SetStateAction<number>>;
+  setConsumableShop?: React.Dispatch<React.SetStateAction<ConsumableAbility[]>>;
   setActivePropertyModalTile: (t: Tile | null) => void;
   setIsLandingPropertyAction: (v: boolean) => void;
   addLog: (msg: string, type?: any) => void;
@@ -108,6 +109,11 @@ export const usePropertyActions = (ctx: PropertyOpsContext) => {
               const idx = nextConsumables.indexOf(useAbilityId);
               if (idx !== -1) {
                 nextConsumables = [...nextConsumables.slice(0, idx), ...nextConsumables.slice(idx + 1)];
+              }
+              if (ctx.setConsumableShop) {
+                ctx.setConsumableShop(shop =>
+                  shop.map(a => (a.id === useAbilityId ? { ...a, quantity: (a.quantity ?? 0) + 1 } : a))
+                );
               }
             }
             return {

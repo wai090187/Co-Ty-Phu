@@ -2,12 +2,16 @@ import { useCallback } from 'react';
 import { Player, Tile, Card, PermanentAbility, ConsumableAbility } from '../../../types/game';
 import { sounds } from '../../../utils/soundEngine';
 import { calculatePropertyRent } from '../../property/utils/rentCalculator';
+import { INITIAL_CHANCE_CARDS, INITIAL_CHEST_CARDS } from '../../../data/cards';
+import { drawRandomCardWithReset } from '../utils/cardDeckHelper';
 
 interface LandingContext {
   tiles: Tile[];
   settings: any;
   chanceDeck: Card[];
   chestDeck: Card[];
+  setChanceDeck: React.Dispatch<React.SetStateAction<Card[]>>;
+  setChestDeck: React.Dispatch<React.SetStateAction<Card[]>>;
   permanentShop: PermanentAbility[];
   consumableShop: ConsumableAbility[];
   pendingDestroyHouseNext: boolean;
@@ -225,21 +229,27 @@ export const useTileLandingResolver = (ctx: LandingContext) => {
         }
         // 5. Chance Tile
         else if (tile.type === 'chance') {
-          const avail = ctx.chanceDeck.filter(c => (c.quantity ?? 1) > 0);
-          if (avail.length > 0) {
-            sounds.cardDraw();
-            const drawn = avail[Math.floor(Math.random() * avail.length)];
-            ctx.setActiveDrawnCard(drawn);
-          }
+          sounds.cardDraw();
+          const drawn = drawRandomCardWithReset(
+            ctx.chanceDeck,
+            'chance',
+            INITIAL_CHANCE_CARDS,
+            ctx.setChanceDeck,
+            ctx.addLog
+          );
+          if (drawn) ctx.setActiveDrawnCard(drawn);
         }
         // 6. Chest Tile
         else if (tile.type === 'chest') {
-          const avail = ctx.chestDeck.filter(c => (c.quantity ?? 1) > 0);
-          if (avail.length > 0) {
-            sounds.cardDraw();
-            const drawn = avail[Math.floor(Math.random() * avail.length)];
-            ctx.setActiveDrawnCard(drawn);
-          }
+          sounds.cardDraw();
+          const drawn = drawRandomCardWithReset(
+            ctx.chestDeck,
+            'chest',
+            INITIAL_CHEST_CARDS,
+            ctx.setChestDeck,
+            ctx.addLog
+          );
+          if (drawn) ctx.setActiveDrawnCard(drawn);
         }
         // 7. Go to Jail / Investigation
         else if (tile.type === 'corner' && tile.cornerType === 'gotojail') {
