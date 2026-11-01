@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { PermanentAbility, Player, Tile } from '../../types/game';
 
 interface Props {
@@ -20,7 +20,42 @@ export const UtilityAbilityModal: React.FC<Props> = ({
   onSellAbility,
   onClose,
 }) => {
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const ownedAbilities = allPermanents.filter(a => player.permanentAbilities.includes(a.id));
+
+  const selectedAbility = abilities[selectedIndex] || null;
+
+  // Keyboard navigation: ArrowUp/ArrowDown to select, Space to buy, Escape to close
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA') return;
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (abilities.length > 0) {
+          setSelectedIndex(prev => (prev + 1) % abilities.length);
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (abilities.length > 0) {
+          setSelectedIndex(prev => (prev - 1 + abilities.length) % abilities.length);
+        }
+      } else if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault();
+        if (selectedAbility && player.cash >= selectedAbility.cost) {
+          onBuyAbility(selectedAbility);
+          onClose();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [abilities, selectedIndex, selectedAbility, player.cash, onBuyAbility, onClose]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
@@ -78,13 +113,19 @@ export const UtilityAbilityModal: React.FC<Props> = ({
               </div>
             ) : (
               <div className="flex flex-col gap-2.5">
-                {abilities.map(ab => {
+                {abilities.map((ab, idx) => {
                   const canAfford = player.cash >= ab.cost;
+                  const isSelected = selectedIndex === idx;
 
                   return (
                     <div
                       key={ab.id}
-                      className="p-3.5 rounded-xl border-2 border-amber-300 bg-amber-50/50 hover:border-amber-400 transition-all flex items-center justify-between gap-3 shadow-xs"
+                      onClick={() => setSelectedIndex(idx)}
+                      className={`p-3.5 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between gap-3 shadow-xs relative ${
+                        isSelected
+                          ? 'border-amber-600 bg-amber-50/90 ring-3 ring-amber-400 scale-[1.01]'
+                          : 'border-amber-300 bg-amber-50/50 hover:border-amber-400'
+                      }`}
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -95,6 +136,11 @@ export const UtilityAbilityModal: React.FC<Props> = ({
                           <span className="text-[9.5px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300">
                             Chưa có chủ
                           </span>
+                          {isSelected && (
+                            <span className="text-[9.5px] font-black text-amber-900 bg-amber-200 px-1.5 py-0.2 rounded border border-amber-400 flex items-center gap-1">
+                              <span>👉</span> Đang chọn (↑ / ↓)
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs text-slate-700 mt-1">{ab.description}</p>
                       </div>
@@ -105,13 +151,18 @@ export const UtilityAbilityModal: React.FC<Props> = ({
                           onClose();
                         }}
                         disabled={!canAfford}
-                        className={`px-3.5 py-2 rounded-lg text-xs font-bold shrink-0 transition-colors ${
+                        className={`px-3.5 py-2 rounded-lg text-xs font-bold shrink-0 flex items-center gap-1.5 transition-colors ${
                           canAfford
-                            ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm'
+                            ? isSelected
+                              ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-md ring-2 ring-amber-300'
+                              : 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm'
                             : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                         }`}
                       >
-                        {canAfford ? 'Mua Ngay' : 'Hết Tiền'}
+                        <span>{canAfford ? 'Mua Ngay' : 'Hết Tiền'}</span>
+                        {canAfford && isSelected && (
+                          <kbd className="px-1.5 py-0.2 text-[9px] bg-white/25 rounded border border-white/40 font-mono">Space</kbd>
+                        )}
                       </button>
                     </div>
                   );
@@ -158,14 +209,26 @@ export const UtilityAbilityModal: React.FC<Props> = ({
           )}
         </div>
 
-        {/* Footer */}
-        <div className="p-3 bg-slate-100 border-t border-slate-200 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg font-bold text-xs"
-          >
-            Đóng Lại
-          </button>
+        {/* Footer Actions & Keyboard Navigation Hint */}
+        <div className="p-3 bg-slate-100 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div className="text-[11px] text-slate-600 font-medium flex items-center gap-1.5">
+            <span className="text-amber-800 font-bold">⌨️ Phím tắt:</span>
+            <span>[↑ / ↓] Chọn</span>
+            <span>•</span>
+            <span>[Space] Mua</span>
+            <span>•</span>
+            <span>[Esc] Đóng</span>
+          </div>
+
+          <div className="flex justify-end w-full sm:w-auto">
+            <button
+              onClick={onClose}
+              className="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg font-bold text-xs flex items-center gap-1.5"
+            >
+              <span>Đóng Lại</span>
+              <kbd className="px-1.5 py-0.2 text-[10px] bg-slate-300 rounded border border-slate-400 font-mono">Esc</kbd>
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -45,6 +45,7 @@ export interface GameModalsProps {
 
   showInventoryPlayerId: number | null;
   onUseConsumableAbility: (ability: ConsumableAbility, target?: Player) => void;
+  onUseGetOutOfJailCard?: () => void;
   onCloseInventory: () => void;
   canRoll: boolean;
 

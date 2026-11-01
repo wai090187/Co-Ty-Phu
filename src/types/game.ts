@@ -65,14 +65,27 @@ export interface Player {
   emotionTimestamp?: number;
 }
 
-export type TriggerCondition = 
+export type TriggerCondition =
   | 'when_roll_dice'
   | 'when_neighbor'
+  | 'when_same_tile'          // Đứng cùng ô với người chơi khác
+  | 'when_own_property'       // Đứng tại đất của mình
+  | 'when_opponent_property'  // Đứng tại đất đối thủ
   | 'when_land_corner'
   | 'when_pay_tax'
   | 'when_pay_rent'
   | 'when_visit_station'
   | 'manual_anytime';
+
+export type AbilityTargetScope =
+  | 'target_choose_1'         // Lựa chọn 1 người chơi
+  | 'target_choose_2'         // Lựa chọn 2 người chơi
+  | 'target_all_players'      // Tất cả người chơi
+  | 'target_adjacent_turns'   // Người chơi có số thứ tự lượt tung xúc xắc trước và sau bạn
+  | 'target_richest'          // Người chơi giàu nhất
+  | 'target_poorest'          // Người chơi nghèo nhất
+  | 'target_bank'             // Ngân hàng
+  | 'self';                   // Bản thân
 
 export interface ConsumableAbility {
   id: string;
@@ -81,6 +94,7 @@ export interface ConsumableAbility {
   cost: number;
   icon: string;
   triggerCondition: TriggerCondition;
+  targetScope?: AbilityTargetScope; // Biến tác động đến ai
   effectType: 
     | 'dice_boost' 
     | 'dice_reduce' 
@@ -92,6 +106,11 @@ export interface ConsumableAbility {
     | 'draw_both_cards' 
     | 'direct_jail_target'
     | 'instant_upgrade_house'
+    | 'gain_cash_amount'
+    | 'pay_cash_amount'
+    | 'upgrade_house'
+    | 'gain_cash_percent'
+    | 'pay_cash_percent'
     | 'custom';
   effectValue: number; // Con số tương ứng riêng biệt
   value?: number;
@@ -105,11 +124,17 @@ export interface PermanentAbility {
   cost: number;
   icon: string;
   triggerCondition: TriggerCondition;
+  targetScope?: AbilityTargetScope; // Biến tác động đến ai
   effectType: 
     | 'steal_neighbor_cash' 
     | 'permanent_free_tax' 
     | 'corner_bonus' 
     | 'station_discount'
+    | 'gain_cash_amount'
+    | 'pay_cash_amount'
+    | 'upgrade_house'
+    | 'gain_cash_percent'
+    | 'pay_cash_percent'
     | 'custom';
   effectValue: number; // Con số tương ứng riêng biệt
   value?: number;

@@ -12,6 +12,8 @@ interface MovementContext {
   consecutiveDoubles: number;
   currentRound: number;
   settings: any;
+  cheatNextDice?: [number, number] | null;
+  setCheatNextDice?: (d: [number, number] | null) => void;
   moveTimerRef: React.MutableRefObject<NodeJS.Timeout | null>;
   remainingStepsRef: React.MutableRefObject<number>;
   movingPlayerIdRef: React.MutableRefObject<number | null>;
@@ -159,8 +161,18 @@ export const useMovementController = (ctx: MovementContext) => {
     ctx.setIsRolling(true);
     ctx.setCanRoll(false);
 
-    const d1 = Math.floor(Math.random() * 6) + 1;
-    const d2 = Math.floor(Math.random() * 6) + 1;
+    let d1 = Math.floor(Math.random() * 6) + 1;
+    let d2 = Math.floor(Math.random() * 6) + 1;
+
+    if (ctx.cheatNextDice) {
+      d1 = ctx.cheatNextDice[0];
+      d2 = ctx.cheatNextDice[1];
+      ctx.addLog(`🛠️ [Cheat Test] Áp dụng xúc xắc chỉ định: [${d1}][${d2}]`, 'ability');
+      if (ctx.setCheatNextDice) {
+        ctx.setCheatNextDice(null);
+      }
+    }
+
     const isDouble = d1 === d2;
     let total = d1 + d2;
 

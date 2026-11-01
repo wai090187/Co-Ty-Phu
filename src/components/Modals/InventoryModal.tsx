@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ConsumableAbility, PermanentAbility, Player, Tile } from '../../types/game';
 import { CharacterIllustration2D5 } from '../Common/CharacterIllustration2D5';
 
@@ -8,6 +8,7 @@ interface Props {
   allPermanents: PermanentAbility[];
   tiles: Tile[];
   onUseAbility: (ability: ConsumableAbility) => void;
+  onUseGetOutOfJailCard?: () => void;
   onClose: () => void;
   isCurrentTurn: boolean;
   canUseDiceModifiers?: boolean;
@@ -19,10 +20,22 @@ export const InventoryModal: React.FC<Props> = ({
   allPermanents,
   tiles,
   onUseAbility,
+  onUseGetOutOfJailCard,
   onClose,
   isCurrentTurn,
   canUseDiceModifiers = false,
 }) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   const ownedConsumables = player.consumableAbilities
     .map(id => allConsumables.find(a => a.id === id))
     .filter((a): a is ConsumableAbility => !!a);
@@ -71,6 +84,54 @@ export const InventoryModal: React.FC<Props> = ({
 
         {/* Content */}
         <div className="p-4 overflow-y-auto flex-1 flex flex-col gap-4 text-xs">
+          {/* Section: Thẻ Ra Tù Miễn Phí */}
+          <div>
+            <div className="flex items-center justify-between pb-1 mb-2 border-b border-slate-200">
+              <span className="font-bold text-sm text-slate-900">
+                🎟️ Thẻ Thoát Tù Miễn Phí ({player.getOutOfJailCards || 0})
+              </span>
+              {player.inJail && (
+                <span className="px-2 py-0.5 bg-rose-100 text-rose-800 rounded font-bold text-[10px]">
+                  Đang bị tạm giữ / điều tra
+                </span>
+              )}
+            </div>
+
+            {player.getOutOfJailCards > 0 ? (
+              <div className="p-3 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 to-blue-50 flex items-center justify-between gap-3 shadow-xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-xl shadow-sm shrink-0">
+                    🎟️
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-slate-900 text-sm">Thẻ Ra Tù Miễn Phí</span>
+                      <span className="px-2 py-0.5 bg-indigo-600 text-white font-mono font-bold text-[10px] rounded-full">
+                        x{player.getOutOfJailCards}
+                      </span>
+                    </div>
+                    <p className="text-slate-600 mt-0.5 text-[11px]">
+                      Dùng khi ở tù hoặc đang bị công an điều tra để được trả tự do lập tức mà không mất tiền bảo lãnh.
+                    </p>
+                  </div>
+                </div>
+
+                {player.inJail && isCurrentTurn && onUseGetOutOfJailCard && (
+                  <button
+                    onClick={onUseGetOutOfJailCard}
+                    className="px-3.5 py-2 rounded-lg font-bold text-xs bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transition-colors shrink-0 animate-pulse"
+                  >
+                    Dùng Ngay
+                  </button>
+                )}
+              </div>
+            ) : (
+              <p className="text-slate-400 italic py-1 text-[11px]">
+                Chưa sở hữu thẻ này. Bạn có thể rút được từ ô Cơ Hội / Khí Vận hoặc cấp qua Bảng Cheat Test.
+              </p>
+            )}
+          </div>
+
           {/* Section 1: Consumable Abilities */}
           <div>
             <div className="flex items-center justify-between pb-1 mb-2 border-b border-slate-200">
@@ -208,9 +269,10 @@ export const InventoryModal: React.FC<Props> = ({
         <div className="p-3 bg-slate-100 border-t border-slate-200 flex justify-end">
           <button
             onClick={onClose}
-            className="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg font-bold text-xs shadow"
+            className="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg font-bold text-xs shadow flex items-center gap-1.5"
           >
-            Đóng
+            <span>Đóng</span>
+            <kbd className="px-1.5 py-0.2 text-[10px] bg-slate-700 text-slate-200 rounded border border-slate-600 font-mono">Esc</kbd>
           </button>
         </div>
       </div>

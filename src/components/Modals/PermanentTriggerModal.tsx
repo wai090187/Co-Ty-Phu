@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AbilityNotification } from '../../types/game';
 
 interface Props {
@@ -11,6 +11,21 @@ export const PermanentTriggerModal: React.FC<Props> = ({ notification, onDismiss
     notification.action();
     onDismiss();
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA') return;
+
+      if (e.key === 'Escape' || e.code === 'Space' || e.key === ' ') {
+        e.preventDefault();
+        handleConfirm();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [notification, onDismiss]);
 
   return (
     <div
@@ -40,9 +55,10 @@ export const PermanentTriggerModal: React.FC<Props> = ({ notification, onDismiss
 
         <button
           onClick={handleConfirm}
-          className="w-full py-2.5 px-4 bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md transition-transform active:scale-95"
+          className="w-full py-2.5 px-4 bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md flex items-center justify-center gap-2 transition-transform active:scale-95"
         >
-          Xác Nhận Kích Hoạt (Nhấn vào màn hình để tắt)
+          <span>Xác Nhận Kích Hoạt</span>
+          <kbd className="px-1.5 py-0.5 text-[10px] bg-white/25 rounded border border-white/40 font-mono">Space / Esc</kbd>
         </button>
       </div>
     </div>

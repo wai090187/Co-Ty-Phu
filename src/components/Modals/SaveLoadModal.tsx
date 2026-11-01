@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SaveGameData } from '../../types/saveGame';
 import { CharacterAvatar } from '../Common/CharacterAvatar';
 
@@ -29,6 +29,21 @@ export const SaveLoadModal: React.FC<Props> = ({
     slotId: number;
     data?: SaveGameData;
   } | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (confirmAction) {
+          setConfirmAction(null);
+        } else {
+          onClose();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [confirmAction, onClose]);
 
   const handleConfirm = () => {
     if (!confirmAction) return;

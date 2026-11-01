@@ -42,7 +42,13 @@ export const AbilitiesTab: React.FC<Props> = ({
       case 'when_roll_dice':
         return '🎲 Khi tung xúc xắc';
       case 'when_neighbor':
-        return '👥 Đứng cạnh/trùng ô đối thủ';
+        return '👥 Đứng cạnh đối thủ (trước/sau)';
+      case 'when_same_tile':
+        return '👥 Đứng cùng ô với người chơi';
+      case 'when_own_property':
+        return '🏰 Đứng tại đất của mình';
+      case 'when_opponent_property':
+        return '⚔️ Đứng tại đất đối thủ';
       case 'when_land_corner':
         return '🏁 Dừng tại 4 ô góc';
       case 'when_pay_tax':

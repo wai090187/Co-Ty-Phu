@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Tile, Player } from '../../types/game';
 
 interface Props {
@@ -45,6 +45,55 @@ export const PropertyModal: React.FC<Props> = ({
   const houseCost = tile.houseCost || 50;
   const canAffordHouse = activePlayer.cash >= houseCost;
   const canAffordBuy = activePlayer.cash >= (tile.price || 0);
+
+  // Keyboard shortcut listener for Space (action) and Escape (close)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept if user is typing in an input field
+      const target = e.target as HTMLElement;
+      if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA') return;
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      } else if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault();
+        if (isLandingAction && !isOwner && owner && !isMortgaged && onPayRent) {
+          onPayRent();
+        } else if (isLandingAction && isUnowned && onBuy && canAffordBuy) {
+          onBuy();
+        } else if (
+          isOwner &&
+          activePlayer.position === tile.id &&
+          canAffordHouse &&
+          hasMovedThisTurn &&
+          upgradesThisTurn === 0 &&
+          onBuildHouse
+        ) {
+          onBuildHouse();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    isLandingAction,
+    isOwner,
+    owner,
+    isMortgaged,
+    onPayRent,
+    isUnowned,
+    onBuy,
+    canAffordBuy,
+    activePlayer.position,
+    tile.id,
+    canAffordHouse,
+    hasMovedThisTurn,
+    upgradesThisTurn,
+    onBuildHouse,
+    onClose,
+  ]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
@@ -155,9 +204,10 @@ export const PropertyModal: React.FC<Props> = ({
           {isLandingAction && !isOwner && owner && !isMortgaged && onPayRent && (
             <button
               onClick={onPayRent}
-              className="w-full py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-sm shadow transition-colors"
+              className="w-full py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-sm shadow flex items-center justify-center gap-2 transition-colors"
             >
-              Nộp Tiền Thuê ({rentAmount} đ)
+              <span>Nộp Tiền Thuê ({rentAmount} đ)</span>
+              <kbd className="px-1.5 py-0.5 text-[10px] bg-white/25 rounded border border-white/40 font-mono">Space</kbd>
             </button>
           )}
 
@@ -167,19 +217,23 @@ export const PropertyModal: React.FC<Props> = ({
               <button
                 onClick={onBuy}
                 disabled={!canAffordBuy}
-                className={`flex-1 py-2.5 px-4 rounded-lg font-bold text-sm shadow transition-colors ${
+                className={`flex-1 py-2.5 px-4 rounded-lg font-bold text-sm shadow flex items-center justify-center gap-2 transition-colors ${
                   canAffordBuy
                     ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
                     : 'bg-slate-300 text-slate-500 cursor-not-allowed'
                 }`}
               >
-                Mua Đất ({tile.price} đ)
+                <span>Mua Đất ({tile.price} đ)</span>
+                {canAffordBuy && (
+                  <kbd className="px-1.5 py-0.5 text-[10px] bg-white/25 rounded border border-white/40 font-mono">Space</kbd>
+                )}
               </button>
               <button
                 onClick={onClose}
-                className="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-semibold text-sm transition-colors"
+                className="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-semibold text-sm flex items-center gap-1.5 transition-colors"
               >
-                Bỏ Qua
+                <span>Bỏ Qua</span>
+                <kbd className="px-1.5 py-0.5 text-[10px] bg-slate-300 text-slate-700 rounded border border-slate-400 font-mono">Esc</kbd>
               </button>
             </div>
           )}
@@ -203,15 +257,20 @@ export const PropertyModal: React.FC<Props> = ({
                     <button
                       onClick={onBuildHouse}
                       disabled={!canAffordHouse || !hasMovedThisTurn || upgradesThisTurn >= 1}
-                      className={`w-full py-2 px-4 rounded-lg font-bold text-sm shadow transition-colors ${
+                      className={`w-full py-2 px-4 rounded-lg font-bold text-sm shadow flex items-center justify-center gap-2 transition-colors ${
                         canAffordHouse && hasMovedThisTurn && upgradesThisTurn === 0
                           ? 'bg-amber-600 hover:bg-amber-700 text-white'
                           : 'bg-slate-300 text-slate-500 cursor-not-allowed'
                       }`}
                     >
-                      {currentHouses === 4
-                        ? `Nâng Lên Khách Sạn (${houseCost} đ)`
-                        : `Xây Thêm 1 Nhà (${houseCost} đ)`}
+                      <span>
+                        {currentHouses === 4
+                          ? `Nâng Lên Khách Sạn (${houseCost} đ)`
+                          : `Xây Thêm 1 Nhà (${houseCost} đ)`}
+                      </span>
+                      {canAffordHouse && hasMovedThisTurn && upgradesThisTurn === 0 && (
+                        <kbd className="px-1.5 py-0.5 text-[10px] bg-white/25 rounded border border-white/40 font-mono">Space</kbd>
+                      )}
                     </button>
                   )}
                 </div>
@@ -264,9 +323,10 @@ export const PropertyModal: React.FC<Props> = ({
           {!isLandingAction && (
             <button
               onClick={onClose}
-              className="w-full py-2 px-4 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg font-bold text-xs"
+              className="w-full py-2 px-4 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5"
             >
-              Đóng Lại
+              <span>Đóng Lại</span>
+              <kbd className="px-1.5 py-0.5 text-[10px] bg-slate-300 text-slate-700 rounded border border-slate-400 font-mono">Esc</kbd>
             </button>
           )}
         </div>

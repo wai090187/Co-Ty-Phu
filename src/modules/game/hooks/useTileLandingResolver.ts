@@ -30,6 +30,10 @@ interface LandingContext {
   setOfferedUtilityAbilities: (a: PermanentAbility[]) => void;
   setActiveAbilityNotification: (n: any) => void;
   setActiveDrawnCard: (c: Card | null) => void;
+  cheatNextChanceCardId?: string | null;
+  setCheatNextChanceCardId?: (id: string | null) => void;
+  cheatNextChestCardId?: string | null;
+  setCheatNextChestCardId?: (id: string | null) => void;
 }
 
 export const useTileLandingResolver = (ctx: LandingContext) => {
@@ -230,25 +234,57 @@ export const useTileLandingResolver = (ctx: LandingContext) => {
         // 5. Chance Tile
         else if (tile.type === 'chance') {
           sounds.cardDraw();
-          const drawn = drawRandomCardWithReset(
-            ctx.chanceDeck,
-            'chance',
-            INITIAL_CHANCE_CARDS,
-            ctx.setChanceDeck,
-            ctx.addLog
-          );
+          let drawn: Card | null = null;
+          if (ctx.cheatNextChanceCardId) {
+            const found =
+              ctx.chanceDeck.find(c => c.id === ctx.cheatNextChanceCardId) ||
+              INITIAL_CHANCE_CARDS.find(c => c.id === ctx.cheatNextChanceCardId);
+            if (found) {
+              drawn = found;
+              ctx.addLog(`🛠️ [Cheat Test] Áp dụng thẻ Cơ Hội chỉ định: ${found.title}`, 'ability');
+            }
+            if (ctx.setCheatNextChanceCardId) {
+              ctx.setCheatNextChanceCardId(null);
+            }
+          }
+
+          if (!drawn) {
+            drawn = drawRandomCardWithReset(
+              ctx.chanceDeck,
+              'chance',
+              INITIAL_CHANCE_CARDS,
+              ctx.setChanceDeck,
+              ctx.addLog
+            );
+          }
           if (drawn) ctx.setActiveDrawnCard(drawn);
         }
         // 6. Chest Tile
         else if (tile.type === 'chest') {
           sounds.cardDraw();
-          const drawn = drawRandomCardWithReset(
-            ctx.chestDeck,
-            'chest',
-            INITIAL_CHEST_CARDS,
-            ctx.setChestDeck,
-            ctx.addLog
-          );
+          let drawn: Card | null = null;
+          if (ctx.cheatNextChestCardId) {
+            const found =
+              ctx.chestDeck.find(c => c.id === ctx.cheatNextChestCardId) ||
+              INITIAL_CHEST_CARDS.find(c => c.id === ctx.cheatNextChestCardId);
+            if (found) {
+              drawn = found;
+              ctx.addLog(`🛠️ [Cheat Test] Áp dụng thẻ Khí Vận chỉ định: ${found.title}`, 'ability');
+            }
+            if (ctx.setCheatNextChestCardId) {
+              ctx.setCheatNextChestCardId(null);
+            }
+          }
+
+          if (!drawn) {
+            drawn = drawRandomCardWithReset(
+              ctx.chestDeck,
+              'chest',
+              INITIAL_CHEST_CARDS,
+              ctx.setChestDeck,
+              ctx.addLog
+            );
+          }
           if (drawn) ctx.setActiveDrawnCard(drawn);
         }
         // 7. Go to Jail / Investigation

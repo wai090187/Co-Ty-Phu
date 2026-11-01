@@ -78,6 +78,10 @@ export const useMonopolyGame = () => {
     setOfferedUtilityAbilities: state.setOfferedUtilityAbilities,
     setActiveAbilityNotification: state.setActiveAbilityNotification,
     setActiveDrawnCard: state.setActiveDrawnCard,
+    cheatNextChanceCardId: state.cheatNextChanceCardId,
+    setCheatNextChanceCardId: state.setCheatNextChanceCardId,
+    cheatNextChestCardId: state.cheatNextChestCardId,
+    setCheatNextChestCardId: state.setCheatNextChestCardId,
   });
 
   // Hook 2: Movement controller
@@ -90,6 +94,8 @@ export const useMonopolyGame = () => {
     consecutiveDoubles: state.consecutiveDoubles,
     currentRound: state.currentRound,
     settings: state.settings,
+    cheatNextDice: state.cheatNextDice,
+    setCheatNextDice: state.setCheatNextDice,
     moveTimerRef: state.moveTimerRef,
     remainingStepsRef: state.remainingStepsRef,
     movingPlayerIdRef: state.movingPlayerIdRef,
@@ -248,6 +254,279 @@ export const useMonopolyGame = () => {
     return extractCurrentSaveState(state, configs);
   }, [state]);
 
+  // Use Free Jail Card
+  const useGetOutOfJailCard = useCallback((playerId?: number) => {
+    const targetId = playerId ?? activePlayer?.id;
+    if (!targetId) return;
+
+    sounds.ability();
+    state.setPlayers(prev =>
+      prev.map(p => {
+        if (p.id === targetId && p.getOutOfJailCards > 0 && p.inJail) {
+          return {
+            ...p,
+            inJail: false,
+            jailTurns: 0,
+            getOutOfJailCards: p.getOutOfJailCards - 1,
+          };
+        }
+        return p;
+      })
+    );
+
+    const p = state.players.find(x => x.id === targetId);
+    if (p) {
+      const isInv = state.settings.jailMode === 'investigation';
+      const msg = isInv
+        ? `🎟️ ${p.name} sử dụng [Thẻ Ra Tù Miễn Phí] để xóa bỏ tình trạng điều tra!`
+        : `🎟️ ${p.name} sử dụng [Thẻ Ra Tù Miễn Phí] để thoát khỏi nhà tù ngay lập tức!`;
+      state.addLog(msg, 'jail');
+      triggerCharacterEvent(
+        p.id,
+        'cleared_investigation',
+        'happy',
+        'Dùng Thẻ Ra Tù',
+        msg
+      );
+    }
+  }, [activePlayer, state, triggerCharacterEvent]);
+
+  // Cheat Mode Methods
+  const cheatTogglePropertyOwner = useCallback(
+    (playerId: number, tileId: number) => {
+      state.setPlayers(prev => {
+        const targetP = prev.find(p => p.id === playerId);
+        if (!targetP) return prev;
+        const isOwnedByTarget = targetP.propertiesOwned.includes(tileId);
+
+        const next = prev.map(p => {
+          const hasIt = p.propertiesOwned.includes(tileId);
+          if (p.id === playerId) {
+            if (isOwnedByTarget) {
+              const newProps = p.propertiesOwned.filter(id => id !== tileId);
+              const newHouses = { ...p.houses };
+              delete newHouses[tileId];
+              const newMortgaged = { ...p.mortgaged };
+              delete newMortgaged[tileId];
+              return { ...p, propertiesOwned: newProps, houses: newHouses, mortgaged: newMortgaged };
+            } else {
+              return {
+                ...p,
+                propertiesOwned: [...p.propertiesOwned, tileId],
+                houses: { ...p.houses, [tileId]: 0 },
+              };
+            }
+          } else if (hasIt) {
+            const newProps = p.propertiesOwned.filter(id => id !== tileId);
+            const newHouses = { ...p.houses };
+            delete newHouses[tileId];
+            const newMortgaged = { ...p.mortgaged };
+            delete newMortgaged[tileId];
+            return { ...p, propertiesOwned: newProps, houses: newHouses, mortgaged: newMortgaged };
+          }
+          return p;
+        });
+
+        const tile = state.tiles[tileId];
+        if (isOwnedByTarget) {
+          state.addLog(
+            `🛠️ [Cheat Test] Thu hồi ô [${tile?.name || tileId}] từ ${targetP.name} về Ngân Hàng`,
+            'property'
+          );
+        } else {
+          state.addLog(
+            `🛠️ [Cheat Test] Gán ô đất [${tile?.name || tileId}] cho ${targetP.name}`,
+            'property'
+          );
+        }
+        return next;
+      });
+    },
+    [state]
+  );
+
+  const cheatSetPropertyHouses = useCallback(
+    (playerId: number, tileId: number, count: number) => {
+      const clamped = Math.max(0, Math.min(5, count));
+      state.setPlayers(prev =>
+        prev.map(p => {
+          if (p.id === playerId) {
+            const owned = p.propertiesOwned.includes(tileId)
+              ? p.propertiesOwned
+              : [...p.propertiesOwned, tileId];
+            return {
+              ...p,
+              propertiesOwned: owned,
+              houses: { ...p.houses, [tileId]: clamped },
+            };
+          }
+          return p;
+        })
+      );
+      const tile = state.tiles[tileId];
+      const p = state.players.find(x => x.id === playerId);
+      state.addLog(
+        `🛠️ [Cheat Test] Đổi cấp nhà của ${p?.name} tại [${tile?.name}] thành ${
+          clamped === 5 ? 'Khách Sạn' : `${clamped} nhà`
+        }`,
+        'property'
+      );
+    },
+    [state]
+  );
+
+  const cheatAddConsumable = useCallback(
+    (playerId: number, abilityId: string) => {
+      state.setPlayers(prev =>
+        prev.map(p => {
+          if (p.id === playerId) {
+            return {
+              ...p,
+              consumableAbilities: [...p.consumableAbilities, abilityId],
+            };
+          }
+          return p;
+        })
+      );
+      const ab = state.consumableShop.find(a => a.id === abilityId);
+      const p = state.players.find(x => x.id === playerId);
+      state.addLog(`🛠️ [Cheat Test] Thêm thẻ năng lực [${ab?.name || abilityId}] cho ${p?.name}`, 'ability');
+    },
+    [state]
+  );
+
+  const cheatRemoveConsumable = useCallback(
+    (playerId: number, index: number) => {
+      state.setPlayers(prev =>
+        prev.map(p => {
+          if (p.id === playerId) {
+            const nextCards = [...p.consumableAbilities];
+            nextCards.splice(index, 1);
+            return { ...p, consumableAbilities: nextCards };
+          }
+          return p;
+        })
+      );
+      const p = state.players.find(x => x.id === playerId);
+      state.addLog(`🛠️ [Cheat Test] Xóa 1 thẻ năng lực dùng 1 lần của ${p?.name}`, 'ability');
+    },
+    [state]
+  );
+
+  const cheatAddPermanent = useCallback(
+    (playerId: number, abilityId: string) => {
+      state.setPlayers(prev =>
+        prev.map(p => {
+          if (p.id === playerId) {
+            if (p.permanentAbilities.includes(abilityId)) return p;
+            return {
+              ...p,
+              permanentAbilities: [...p.permanentAbilities, abilityId],
+            };
+          }
+          return p;
+        })
+      );
+      const ab = state.permanentShop.find(a => a.id === abilityId);
+      const p = state.players.find(x => x.id === playerId);
+      state.addLog(`🛠️ [Cheat Test] Thêm năng lực VIP [${ab?.name || abilityId}] cho ${p?.name}`, 'ability');
+    },
+    [state]
+  );
+
+  const cheatRemovePermanent = useCallback(
+    (playerId: number, abilityId: string) => {
+      state.setPlayers(prev =>
+        prev.map(p => {
+          if (p.id === playerId) {
+            return {
+              ...p,
+              permanentAbilities: p.permanentAbilities.filter(id => id !== abilityId),
+            };
+          }
+          return p;
+        })
+      );
+      const ab = state.permanentShop.find(a => a.id === abilityId);
+      const p = state.players.find(x => x.id === playerId);
+      state.addLog(`🛠️ [Cheat Test] Xóa năng lực VIP [${ab?.name || abilityId}] của ${p?.name}`, 'ability');
+    },
+    [state]
+  );
+
+  const cheatSetGetOutOfJailCards = useCallback(
+    (playerId: number, count: number) => {
+      const safeCount = Math.max(0, count);
+      state.setPlayers(prev =>
+        prev.map(p => {
+          if (p.id === playerId) {
+            return { ...p, getOutOfJailCards: safeCount };
+          }
+          return p;
+        })
+      );
+      const p = state.players.find(x => x.id === playerId);
+      state.addLog(`🛠️ [Cheat Test] Đặt số [Thẻ Ra Tù Miễn Phí] của ${p?.name} thành ${safeCount}`, 'jail');
+    },
+    [state]
+  );
+
+  const cheatSetCash = useCallback(
+    (playerId: number, amount: number) => {
+      const safeCash = Math.max(0, amount);
+      state.setPlayers(prev =>
+        prev.map(p => {
+          if (p.id === playerId) {
+            return { ...p, cash: safeCash };
+          }
+          return p;
+        })
+      );
+      const p = state.players.find(x => x.id === playerId);
+      state.addLog(`🛠️ [Cheat Test] Đặt số dư của ${p?.name} thành ${safeCash}đ`, 'money');
+    },
+    [state]
+  );
+
+  const cheatToggleJail = useCallback(
+    (playerId: number) => {
+      state.setPlayers(prev =>
+        prev.map(p => {
+          if (p.id === playerId) {
+            const willBeInJail = !p.inJail;
+            return {
+              ...p,
+              inJail: willBeInJail,
+              position: willBeInJail ? 10 : p.position,
+              jailTurns: 0,
+            };
+          }
+          return p;
+        })
+      );
+      const p = state.players.find(x => x.id === playerId);
+      state.addLog(`🛠️ [Cheat Test] Đổi trạng thái tù/điều tra của ${p?.name}`, 'jail');
+    },
+    [state]
+  );
+
+  const cheatTeleportPlayer = useCallback(
+    (playerId: number, targetTileId: number) => {
+      state.setPlayers(prev =>
+        prev.map(p => {
+          if (p.id === playerId) {
+            return { ...p, position: (targetTileId + 40) % 40 };
+          }
+          return p;
+        })
+      );
+      const p = state.players.find(x => x.id === playerId);
+      const tile = state.tiles[targetTileId];
+      state.addLog(`🛠️ [Cheat Test] Dịch chuyển ${p?.name} đến ô [${tile?.name || targetTileId}]`, 'info');
+    },
+    [state]
+  );
+
   return {
     ...state,
     activePlayer,
@@ -261,6 +540,7 @@ export const useMonopolyGame = () => {
     unmortgageProperty,
     payBail,
     canPlayerPayBail,
+    useGetOutOfJailCard,
     buyConsumableAbility,
     buyPermanentAbility,
     sellPermanentAbility,
@@ -275,5 +555,16 @@ export const useMonopolyGame = () => {
     triggerCharacterEvent,
     loadSavedGame,
     getCurrentSaveState,
+    // Cheat Actions
+    cheatTogglePropertyOwner,
+    cheatSetPropertyHouses,
+    cheatAddConsumable,
+    cheatRemoveConsumable,
+    cheatAddPermanent,
+    cheatRemovePermanent,
+    cheatSetGetOutOfJailCards,
+    cheatSetCash,
+    cheatToggleJail,
+    cheatTeleportPlayer,
   };
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Player } from '../../types/game';
 import { CharacterAvatar } from '../Common/CharacterAvatar';
 
@@ -17,6 +17,20 @@ export const AiActionModal: React.FC<Props> = ({
   type,
   onDismiss,
 }) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA') return;
+
+      if (e.key === 'Escape' || e.code === 'Space' || e.key === ' ') {
+        e.preventDefault();
+        onDismiss();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onDismiss]);
   return (
     <div
       onClick={onDismiss}
@@ -51,9 +65,10 @@ export const AiActionModal: React.FC<Props> = ({
 
         <button
           onClick={onDismiss}
-          className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md transition-transform active:scale-95"
+          className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md flex items-center justify-center gap-2 transition-transform active:scale-95"
         >
-          Tiếp Tục Ván Đấu (Nhấn màn hình để tắt)
+          <span>Tiếp Tục Ván Đấu</span>
+          <kbd className="px-1.5 py-0.5 text-[10px] bg-white/20 rounded border border-white/30 font-mono">Space / Esc</kbd>
         </button>
       </div>
     </div>

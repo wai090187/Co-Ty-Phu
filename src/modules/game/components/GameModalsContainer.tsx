@@ -43,6 +43,7 @@ export const GameModalsContainer: React.FC<GameModalsProps> = ({
   onCloseDrawnCard,
   showInventoryPlayerId,
   onUseConsumableAbility,
+  onUseGetOutOfJailCard,
   onCloseInventory,
   canRoll,
   showSettings,
@@ -147,6 +148,7 @@ export const GameModalsContainer: React.FC<GameModalsProps> = ({
           allPermanents={permanentShop}
           tiles={tiles}
           onUseAbility={onUseConsumableAbility}
+          onUseGetOutOfJailCard={onUseGetOutOfJailCard}
           onClose={onCloseInventory}
           isCurrentTurn={showInventoryPlayerId === activePlayer?.id}
           canUseDiceModifiers={canRoll}

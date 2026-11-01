@@ -190,6 +190,15 @@ export const PlayerCard: React.FC<Props> = ({
             )}
           </div>
 
+          {player.getOutOfJailCards > 0 && (
+            <span
+              className="font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200"
+              title={`Sở hữu ${player.getOutOfJailCards} thẻ thoát tù miễn phí`}
+            >
+              🎟️ {player.getOutOfJailCards}
+            </span>
+          )}
+
           {onOpenInventory && (
             <button
               onClick={onOpenInventory}

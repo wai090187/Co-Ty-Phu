@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Character } from '../../types/game';
 import { CHARACTERS } from '../../data/characters';
 import { CharacterAvatar } from '../Common/CharacterAvatar';
@@ -20,6 +20,17 @@ export const CharacterSelectModal: React.FC<Props> = ({
   const [activeChar, setActiveChar] = useState<Character>(
     CHARACTERS.find(c => c.id === selectedCharacterId) || CHARACTERS[0]
   );
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const styleLabels: Record<string, { label: string; color: string }> = {
     retro: { label: 'Sài Gòn Retro', color: 'bg-amber-100 text-amber-800' },

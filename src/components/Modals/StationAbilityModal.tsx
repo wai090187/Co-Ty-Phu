@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ConsumableAbility, Player, Tile } from '../../types/game';
 
 interface Props {
@@ -18,9 +18,14 @@ export const StationAbilityModal: React.FC<Props> = ({
   onClose,
   hasVipDiscount = false,
 }) => {
-  const [selectedAbility, setSelectedAbility] = useState<ConsumableAbility | null>(null);
-  const [discardTargetId, setDiscardTargetId] = useState<string | undefined>();
+  const availableAbilities = abilities.filter(a => (a.quantity ?? 1) > 0);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [discardTargetId, setDiscardTargetId] = useState<string | undefined>(
+    player.consumableAbilities.length >= 3 ? player.consumableAbilities[0] : undefined
+  );
   const isInventoryFull = player.consumableAbilities.length >= 3;
+
+  const selectedAbility = availableAbilities[selectedIndex] || null;
 
   const getPrice = (ability: ConsumableAbility) => {
     return hasVipDiscount ? Math.round(ability.cost * 0.5) : ability.cost;
@@ -28,8 +33,41 @@ export const StationAbilityModal: React.FC<Props> = ({
 
   const handleConfirmPurchase = () => {
     if (!selectedAbility) return;
-    onBuyAbility(selectedAbility, discardTargetId);
+    const finalDiscardId = isInventoryFull ? (discardTargetId || player.consumableAbilities[0]) : undefined;
+    onBuyAbility(selectedAbility, finalDiscardId);
+    onClose();
   };
+
+  // Keyboard navigation: ArrowUp/ArrowDown to select, Space to buy, Escape to close
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA') return;
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (availableAbilities.length > 0) {
+          setSelectedIndex(prev => (prev + 1) % availableAbilities.length);
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (availableAbilities.length > 0) {
+          setSelectedIndex(prev => (prev - 1 + availableAbilities.length) % availableAbilities.length);
+        }
+      } else if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault();
+        if (selectedAbility && player.cash >= getPrice(selectedAbility)) {
+          handleConfirmPurchase();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [availableAbilities, selectedIndex, selectedAbility, player.cash, isInventoryFull, discardTargetId, onClose]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
@@ -73,57 +111,60 @@ export const StationAbilityModal: React.FC<Props> = ({
 
         {/* Abilities List */}
         <div className="p-4 overflow-y-auto flex-1 flex flex-col gap-2.5">
-          {abilities.filter(a => (a.quantity ?? 1) > 0).length === 0 ? (
+          {availableAbilities.length === 0 ? (
             <div className="text-center py-8 text-slate-500 text-xs">
               Hiện tại tất cả năng lực tại trạm này đã hết hàng hoặc bị ẩn (SL = 0).
             </div>
           ) : (
-            abilities
-              .filter(a => (a.quantity ?? 1) > 0)
-              .map(ab => {
-                const price = getPrice(ab);
-                const canAfford = player.cash >= price;
-                const isSelected = selectedAbility?.id === ab.id;
+            availableAbilities.map((ab, idx) => {
+              const price = getPrice(ab);
+              const canAfford = player.cash >= price;
+              const isSelected = selectedIndex === idx;
 
-                return (
-                  <div
-                    key={ab.id}
-                    onClick={() => setSelectedAbility(ab)}
-                    className={`p-3 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                      isSelected
-                        ? 'border-emerald-600 bg-emerald-50/80 shadow-md ring-2 ring-emerald-400'
-                        : 'border-slate-200 bg-white hover:border-emerald-300'
+              return (
+                <div
+                  key={ab.id}
+                  onClick={() => setSelectedIndex(idx)}
+                  className={`p-3 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between gap-3 relative ${
+                    isSelected
+                      ? 'border-emerald-600 bg-emerald-50/90 shadow-md ring-3 ring-emerald-400 scale-[1.01]'
+                      : 'border-slate-200 bg-white hover:border-emerald-300'
+                  }`}
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-sm text-slate-900">{ab.name}</span>
+                      <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded">
+                        {price} đ
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">
+                        Kho: {ab.quantity ?? 1}
+                      </span>
+                      {isSelected && (
+                        <span className="text-[9.5px] font-black text-emerald-800 bg-emerald-200 px-1.5 py-0.2 rounded border border-emerald-400 flex items-center gap-1">
+                          <span>👉</span> Đang chọn (↑ / ↓)
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-600 mt-0.5">{ab.description}</p>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={!canAfford}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold shrink-0 transition-colors ${
+                      canAfford
+                        ? isSelected
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                        : 'bg-slate-100 text-slate-400 cursor-not-allowed'
                     }`}
                   >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-sm text-slate-900">{ab.name}</span>
-                        <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded">
-                          {price} đ
-                        </span>
-                        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">
-                          Kho: {ab.quantity ?? 1}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-600 mt-0.5">{ab.description}</p>
-                    </div>
-
-                    <button
-                      type="button"
-                      disabled={!canAfford}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold shrink-0 transition-colors ${
-                        canAfford
-                          ? isSelected
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                          : 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                      }`}
-                    >
-                      {canAfford ? (isSelected ? 'Đã Chọn' : 'Chọn') : 'Hết Tiền'}
-                    </button>
-                  </div>
-                );
-              })
+                    {canAfford ? (isSelected ? 'Đã Chọn' : 'Chọn') : 'Hết Tiền'}
+                  </button>
+                </div>
+              );
+            })
           )}
         </div>
 
@@ -156,31 +197,46 @@ export const StationAbilityModal: React.FC<Props> = ({
           </div>
         )}
 
-        {/* Footer Actions */}
-        <div className="p-3 bg-slate-100 border-t border-slate-200 flex justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-semibold text-xs"
-          >
-            Đóng Lại
-          </button>
-          <button
-            onClick={handleConfirmPurchase}
-            disabled={
-              !selectedAbility ||
-              player.cash < getPrice(selectedAbility) ||
-              (isInventoryFull && !discardTargetId)
-            }
-            className={`px-5 py-2 rounded-lg font-bold text-xs shadow transition-colors ${
-              selectedAbility &&
-              player.cash >= getPrice(selectedAbility) &&
-              (!isInventoryFull || discardTargetId)
-                ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                : 'bg-slate-300 text-slate-500 cursor-not-allowed'
-            }`}
-          >
-            Xác Nhận Mua {selectedAbility ? `(${getPrice(selectedAbility)} đ)` : ''}
-          </button>
+        {/* Footer Actions & Keyboard Navigation Hint */}
+        <div className="p-3 bg-slate-100 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div className="text-[11px] text-slate-600 font-medium flex items-center gap-1.5">
+            <span className="text-emerald-700 font-bold">⌨️ Phím tắt:</span>
+            <span>[↑ / ↓] Chọn</span>
+            <span>•</span>
+            <span>[Space] Mua</span>
+            <span>•</span>
+            <span>[Esc] Đóng</span>
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-semibold text-xs flex items-center gap-1.5"
+            >
+              <span>Đóng Lại</span>
+              <kbd className="px-1.5 py-0.2 text-[10px] bg-slate-300 rounded border border-slate-400 font-mono">Esc</kbd>
+            </button>
+            <button
+              onClick={handleConfirmPurchase}
+              disabled={
+                !selectedAbility ||
+                player.cash < getPrice(selectedAbility) ||
+                (isInventoryFull && !discardTargetId)
+              }
+              className={`px-5 py-2 rounded-lg font-bold text-xs shadow flex items-center gap-2 transition-colors ${
+                selectedAbility &&
+                player.cash >= getPrice(selectedAbility) &&
+                (!isInventoryFull || discardTargetId)
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                  : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+              }`}
+            >
+              <span>Xác Nhận Mua {selectedAbility ? `(${getPrice(selectedAbility)} đ)` : ''}</span>
+              {selectedAbility && player.cash >= getPrice(selectedAbility) && (
+                <kbd className="px-1.5 py-0.5 text-[10px] bg-white/25 rounded border border-white/40 font-mono">Space</kbd>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

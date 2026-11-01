@@ -18,7 +18,17 @@ export const GameOverModal: React.FC<Props> = ({ winner, tiles, onRestart }) => 
       spread: 70,
       origin: { y: 0.6 },
     });
-  }, []);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' || e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        onRestart();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onRestart]);
 
   const totalHouses = Object.values(winner.houses).reduce((sum, h) => sum + h, 0);
 
@@ -65,9 +75,10 @@ export const GameOverModal: React.FC<Props> = ({ winner, tiles, onRestart }) => 
 
         <button
           onClick={onRestart}
-          className="w-full py-3 bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white font-display font-bold text-base tracking-wider uppercase rounded-xl shadow-lg transition-transform active:scale-95 mt-2"
+          className="w-full py-3 bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white font-display font-bold text-base tracking-wider uppercase rounded-xl shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95 mt-2"
         >
-          Bắt Đầu Ván Mới
+          <span>Bắt Đầu Ván Mới</span>
+          <kbd className="px-2 py-0.5 text-xs bg-white/25 rounded border border-white/40 font-mono">Space</kbd>
         </button>
       </div>
     </div>

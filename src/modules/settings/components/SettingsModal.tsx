@@ -51,6 +51,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     onClose();
   };
 
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-150">
       <div className="w-full max-w-2xl bg-[#FAF8F5] border-2 border-slate-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">

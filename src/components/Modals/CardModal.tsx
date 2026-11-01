@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card } from '../../types/game';
 
 interface Props {
@@ -15,6 +15,33 @@ export const CardModal: React.FC<Props> = ({
   onClose,
 }) => {
   const isChance = card.deck === 'chance';
+
+  // Keyboard shortcut listener for Space (confirm/execute) and Escape (close/dismiss)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA') return;
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (onClose) {
+          onClose();
+        } else if (isActionable) {
+          onExecute();
+        }
+      } else if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault();
+        if (isActionable) {
+          onExecute();
+        } else if (onClose) {
+          onClose();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isActionable, onExecute, onClose]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in zoom-in-95 duration-150">
@@ -59,22 +86,35 @@ export const CardModal: React.FC<Props> = ({
 
         {/* Action Button */}
         {isActionable ? (
-          <button
-            onClick={onExecute}
-            className={`w-full py-3 rounded-xl font-display font-bold text-base tracking-wider uppercase text-white shadow-lg transition-transform active:scale-95 ${
-              isChance
-                ? 'bg-gradient-to-r from-rose-600 to-pink-700 hover:from-rose-500 hover:to-pink-600'
-                : 'bg-gradient-to-r from-amber-600 to-yellow-700 hover:from-amber-500 hover:to-yellow-600'
-            }`}
-          >
-            Chấp Nhận Thực Hiện
-          </button>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={onExecute}
+              className={`w-full py-3 rounded-xl font-display font-bold text-base tracking-wider uppercase text-white shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95 ${
+                isChance
+                  ? 'bg-gradient-to-r from-rose-600 to-pink-700 hover:from-rose-500 hover:to-pink-600'
+                  : 'bg-gradient-to-r from-amber-600 to-yellow-700 hover:from-amber-500 hover:to-yellow-600'
+              }`}
+            >
+              <span>Chấp Nhận Thực Hiện</span>
+              <kbd className="px-2 py-0.5 text-xs bg-white/25 rounded border border-white/40 font-mono">Space</kbd>
+            </button>
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="w-full py-1.5 text-xs text-slate-500 hover:text-slate-700 font-semibold flex items-center justify-center gap-1"
+              >
+                <span>Bỏ qua / Đóng</span>
+                <kbd className="px-1.5 py-0.2 text-[10px] bg-slate-200 rounded border border-slate-300 font-mono">Esc</kbd>
+              </button>
+            )}
+          </div>
         ) : (
           <button
             onClick={onClose}
-            className="w-full py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl font-bold text-sm"
+            className="w-full py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
           >
-            Đóng Lại
+            <span>Đóng Lại</span>
+            <kbd className="px-1.5 py-0.5 text-xs bg-slate-300 rounded border border-slate-400 font-mono">Esc / Space</kbd>
           </button>
         )}
       </div>

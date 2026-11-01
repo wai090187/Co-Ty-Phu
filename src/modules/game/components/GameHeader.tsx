@@ -5,6 +5,8 @@ interface Props {
   currentRound: number;
   onOpenSettings: () => void;
   onOpenSaveLoad: () => void;
+  onOpenCheat?: () => void;
+  hasActiveCheat?: boolean;
 }
 
 export const GameHeader: React.FC<Props> = ({
@@ -12,6 +14,8 @@ export const GameHeader: React.FC<Props> = ({
   currentRound,
   onOpenSettings,
   onOpenSaveLoad,
+  onOpenCheat,
+  hasActiveCheat = false,
 }) => {
   return (
     <header className="bg-slate-900 text-white border-b-2 border-amber-600 px-4 py-2.5 flex items-center justify-between shadow-md z-30">
@@ -45,6 +49,24 @@ export const GameHeader: React.FC<Props> = ({
           <span>💾</span>
           <span className="hidden sm:inline">Lưu / Tải</span>
         </button>
+
+        {isPlaying && onOpenCheat && (
+          <button
+            onClick={onOpenCheat}
+            className={`px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all border shadow-xs ${
+              hasActiveCheat
+                ? 'bg-rose-600 hover:bg-rose-500 text-white border-rose-400 ring-2 ring-rose-400/50 animate-pulse'
+                : 'bg-slate-800 hover:bg-slate-700 text-rose-300 border-rose-900/60'
+            }`}
+            title="Mở Bảng Cheat & Kiểm Thử"
+          >
+            <span>🛠️</span>
+            <span className="hidden sm:inline">Cheat Test</span>
+            {hasActiveCheat && (
+              <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+            )}
+          </button>
+        )}
 
         <button
           onClick={onOpenSettings}

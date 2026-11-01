@@ -7,6 +7,7 @@ import { GamePlayScreen } from './modules/game/components/GamePlayScreen';
 import { GameModalsContainer } from './modules/game/components/GameModalsContainer';
 import { CharacterEventStage } from './components/Effects/CharacterEventStage';
 import { SaveLoadModal } from './components/Modals/SaveLoadModal';
+import { CheatModal } from './components/Modals/CheatModal';
 import { useSaveGame } from './modules/game/hooks/useSaveGame';
 import { DEFAULT_PLAYER_COLORS, INITIAL_PLAYER_CONFIGS } from './modules/game/constants/defaultSetup';
 import { AIDifficulty, Character, Player } from './types/game';
@@ -99,6 +100,10 @@ export default function App() {
         currentRound={game.currentRound}
         onOpenSettings={() => setShowSettings(true)}
         onOpenSaveLoad={() => setShowSaveLoadModal(true)}
+        onOpenCheat={() => game.setIsCheatModalOpen(true)}
+        hasActiveCheat={
+          !!(game.cheatNextDice || game.cheatNextChanceCardId || game.cheatNextChestCardId)
+        }
       />
 
       {!game.isPlaying ? (
@@ -181,6 +186,7 @@ export default function App() {
         onCloseDrawnCard={() => game.setActiveDrawnCard(null)}
         showInventoryPlayerId={showInventoryPlayerId}
         onUseConsumableAbility={game.useConsumableAbility}
+        onUseGetOutOfJailCard={game.useGetOutOfJailCard}
         onCloseInventory={() => setShowInventoryPlayerId(null)}
         canRoll={game.canRoll}
         showSettings={showSettings}
@@ -243,6 +249,36 @@ export default function App() {
           onClose={() => setShowSaveLoadModal(false)}
         />
       )}
+
+      {/* Cheat & Test Mode Modal */}
+      <CheatModal
+        isOpen={game.isCheatModalOpen}
+        onClose={() => game.setIsCheatModalOpen(false)}
+        players={game.players}
+        selectedPlayerId={game.cheatSelectedPlayerId}
+        onSelectPlayer={game.setCheatSelectedPlayerId}
+        tiles={game.tiles}
+        consumableShop={game.consumableShop}
+        permanentShop={game.permanentShop}
+        chanceDeck={game.chanceDeck}
+        chestDeck={game.chestDeck}
+        cheatNextDice={game.cheatNextDice}
+        onSetCheatNextDice={game.setCheatNextDice}
+        cheatNextChanceCardId={game.cheatNextChanceCardId}
+        onSetCheatNextChanceCardId={game.setCheatNextChanceCardId}
+        cheatNextChestCardId={game.cheatNextChestCardId}
+        onSetCheatNextChestCardId={game.setCheatNextChestCardId}
+        onTogglePropertyOwner={game.cheatTogglePropertyOwner}
+        onSetPropertyHouses={game.cheatSetPropertyHouses}
+        onAddConsumable={game.cheatAddConsumable}
+        onRemoveConsumable={game.cheatRemoveConsumable}
+        onAddPermanent={game.cheatAddPermanent}
+        onRemovePermanent={game.cheatRemovePermanent}
+        onSetGetOutOfJailCards={game.cheatSetGetOutOfJailCards}
+        onSetCash={game.cheatSetCash}
+        onToggleJail={game.cheatToggleJail}
+        onTeleportPlayer={game.cheatTeleportPlayer}
+      />
     </div>
   );
 }

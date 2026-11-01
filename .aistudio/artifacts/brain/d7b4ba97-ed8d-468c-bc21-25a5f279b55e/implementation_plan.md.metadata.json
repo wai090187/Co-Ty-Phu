@@ -1,6 +1,0 @@
-{
-  "summary":  "Kế hoạch chi tiết phát triển game Cờ Tỷ Phú Việt Nam (bản Sài Gòn xưa) chuẩn xác 100% theo hình ảnh đính kèm. Kế hoạch bao gồm danh sách đầy đủ 40 ô bàn cờ nguyên bản, toàn bộ hệ thống luật chơi chi tiết (mua bán đất, xây nhà/khách sạn, 4 bến xe, 2 công ty điện/nước, các loại thuế, thẻ Cơ Hội & Khí Vận, luật tù và phá sản), kiến trúc game engine 2D Canvas/SVG tương tác mượt mà, hệ thống bot AI thông minh cùng chế độ chơi nhiều người trên cùng màn hình, hiệu ứng âm thanh Web Audio và xúc xắc sống động.",
-  "updatedAt":  "2026-10-31T11:50:05.465685531Z",
-  "requestFeedback":  true,
-  "userFacing":  true
-}

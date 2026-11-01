@@ -101,6 +101,13 @@ export const useGameState = () => {
   const [pendingDiceBoost, setPendingDiceBoost] = useState<number>(0);
   const [pendingDestroyHouseNext, setPendingDestroyHouseNext] = useState<boolean>(false);
 
+  // Cheat Mode State
+  const [isCheatModalOpen, setIsCheatModalOpen] = useState<boolean>(false);
+  const [cheatSelectedPlayerId, setCheatSelectedPlayerId] = useState<number>(1);
+  const [cheatNextDice, setCheatNextDice] = useState<[number, number] | null>(null);
+  const [cheatNextChanceCardId, setCheatNextChanceCardId] = useState<string | null>(null);
+  const [cheatNextChestCardId, setCheatNextChestCardId] = useState<string | null>(null);
+
   const [logs, setLogs] = useState<LogEntry[]>([]);
 
   const addLog = useCallback((text: string, type: LogEntry['type'] = 'info') => {
@@ -183,6 +190,16 @@ export const useGameState = () => {
     setPendingDiceBoost,
     pendingDestroyHouseNext,
     setPendingDestroyHouseNext,
+    isCheatModalOpen,
+    setIsCheatModalOpen,
+    cheatSelectedPlayerId,
+    setCheatSelectedPlayerId,
+    cheatNextDice,
+    setCheatNextDice,
+    cheatNextChanceCardId,
+    setCheatNextChanceCardId,
+    cheatNextChestCardId,
+    setCheatNextChestCardId,
     logs,
     setLogs,
     addLog,
