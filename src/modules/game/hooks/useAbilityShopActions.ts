@@ -136,6 +136,14 @@ export const useAbilityShopActions = (ctx: AbilityContext) => {
         const p = next.find(x => x.id === ctx.activePlayer!.id);
         if (!p) return prev;
 
+        if (ability.effectType === 'instant_upgrade_house') {
+          ctx.addLog(
+            `⚡ [Giấy Phép Xây Dựng Đặc Cách]: Bấm vào bất kỳ ô đất nào của bạn trên bàn cờ để sử dụng giấy phép và nâng cấp ngay lập tức!`,
+            'ability'
+          );
+          return prev;
+        }
+
         p.consumableAbilities = p.consumableAbilities.filter(id => id !== ability.id);
 
         switch (ability.effectType) {

@@ -91,6 +91,7 @@ export interface ConsumableAbility {
     | 'destroy_house' 
     | 'draw_both_cards' 
     | 'direct_jail_target'
+    | 'instant_upgrade_house'
     | 'custom';
   effectValue: number; // Con số tương ứng riêng biệt
   value?: number;

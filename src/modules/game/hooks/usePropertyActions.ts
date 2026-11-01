@@ -54,20 +54,12 @@ export const usePropertyActions = (ctx: PropertyOpsContext) => {
   );
 
   const buildHouse = useCallback(
-    (tile: Tile): { success: boolean; message?: string } => {
+    (tile: Tile, useAbilityId?: string): { success: boolean; message?: string } => {
       if (!ctx.activePlayer || !tile.houseCost) return { success: false };
 
-      if (!ctx.hasMovedThisTurn) {
-        return {
-          success: false,
-          message: 'Bạn phải di chuyển xong lượt của mình mới được nâng cấp nhà!',
-        };
-      }
-      if (ctx.upgradesThisTurn >= 1) {
-        return {
-          success: false,
-          message: 'Mỗi lượt bạn chỉ được phép nâng cấp nhà 1 lần!',
-        };
+      const isOwner = ctx.activePlayer.propertiesOwned.includes(tile.id);
+      if (!isOwner) {
+        return { success: false, message: 'Bạn không sở hữu ô đất này!' };
       }
 
       const currentHouses = ctx.activePlayer.houses[tile.id] || 0;
@@ -76,15 +68,52 @@ export const usePropertyActions = (ctx: PropertyOpsContext) => {
         return { success: false, message: 'Không đủ tiền mặt để nâng cấp!' };
       }
 
+      const isStandingOnTile = ctx.activePlayer.position === tile.id;
+
+      if (useAbilityId) {
+        if (!ctx.activePlayer.consumableAbilities.includes(useAbilityId)) {
+          return { success: false, message: 'Bạn không có thẻ kỹ năng này!' };
+        }
+      } else {
+        if (!ctx.hasMovedThisTurn) {
+          return {
+            success: false,
+            message: 'Bạn phải di chuyển xong lượt của mình mới được nâng cấp nhà!',
+          };
+        }
+        if (!isStandingOnTile) {
+          return {
+            success: false,
+            message: 'Bạn phải dừng chân trên ô đất của mình mới được nâng cấp (hoặc dùng thẻ Giấy Phép Xây Dựng Đặc Cách)!',
+          };
+        }
+        if (ctx.upgradesThisTurn >= 1) {
+          return {
+            success: false,
+            message: 'Mỗi lượt bạn chỉ được phép nâng cấp nhà 1 lần tại ô đang đứng!',
+          };
+        }
+      }
+
       sounds.buildHouse();
-      ctx.setUpgradesThisTurn(prev => prev + 1);
+      if (!useAbilityId) {
+        ctx.setUpgradesThisTurn(prev => prev + 1);
+      }
 
       ctx.setPlayers(prev =>
         prev.map(p => {
           if (p.id === ctx.activePlayer!.id) {
+            let nextConsumables = p.consumableAbilities;
+            if (useAbilityId) {
+              const idx = nextConsumables.indexOf(useAbilityId);
+              if (idx !== -1) {
+                nextConsumables = [...nextConsumables.slice(0, idx), ...nextConsumables.slice(idx + 1)];
+              }
+            }
             return {
               ...p,
               cash: p.cash - tile.houseCost!,
+              consumableAbilities: nextConsumables,
               houses: {
                 ...p.houses,
                 [tile.id]: currentHouses + 1,
@@ -100,13 +129,17 @@ export const usePropertyActions = (ctx: PropertyOpsContext) => {
         ctx.activePlayer.id,
         'upgrade_house',
         'happy',
-        'Nâng Cấp Công Trình',
-        `${ctx.activePlayer.name} vừa xây thêm nhà tại [${tile.name}]!`,
+        useAbilityId ? 'Kỹ Năng: Nâng Cấp Thần Tốc' : 'Nâng Cấp Công Trình',
+        useAbilityId
+          ? `${ctx.activePlayer.name} sử dụng Giấy Phép Đặc Cách nâng cấp từ xa [${tile.name}]!`
+          : `${ctx.activePlayer.name} vừa xây thêm nhà tại [${tile.name}]!`,
         -tile.houseCost
       );
       ctx.addLog(
-        `🔨 ${ctx.activePlayer.name} xây thêm 1 cấp nhà trên [${tile.name}] (${currentHouses + 1} nhà)`,
-        'property'
+        useAbilityId
+          ? `⚡📜 ${ctx.activePlayer.name} dùng Kỹ Năng [Giấy Phép Xây Dựng Đặc Cách] nâng cấp từ xa [${tile.name}] (${currentHouses + 1} nhà)`
+          : `🔨 ${ctx.activePlayer.name} dừng chân tại ô đất và xây thêm 1 cấp nhà trên [${tile.name}] (${currentHouses + 1} nhà)`,
+        useAbilityId ? 'ability' : 'property'
       );
       return { success: true };
     },

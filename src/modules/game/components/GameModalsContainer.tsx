@@ -87,6 +87,12 @@ export const GameModalsContainer: React.FC<GameModalsProps> = ({
               alert(res.message);
             }
           }}
+          onBuildHouseWithAbility={(abilityId: string) => {
+            const res = onBuildHouse(activePropertyModalTile, abilityId);
+            if (!res.success && res.message) {
+              alert(res.message);
+            }
+          }}
           onMortgage={() => onMortgageProperty(activePropertyModalTile)}
           onUnmortgage={() => onUnmortgageProperty(activePropertyModalTile)}
           onPayRent={onClosePropertyModal}

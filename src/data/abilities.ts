@@ -175,6 +175,17 @@ export const INITIAL_CONSUMABLE_ABILITIES: ConsumableAbility[] = [
     effectValue: 1,
     quantity: 1,
   },
+  {
+    id: 'instant-upgrade-permit',
+    name: 'Giấy Phép Xây Dựng Đặc Cách',
+    description: 'Nâng cấp 1 cấp nhà trên bất kỳ ô đất nào của bạn ngay lập tức mà không cần đứng trên ô đất đó (vẫn trả phí xây nhà, dùng 1 lần).',
+    cost: 150,
+    icon: 'hammer',
+    triggerCondition: 'manual_anytime',
+    effectType: 'instant_upgrade_house',
+    effectValue: 1,
+    quantity: 2,
+  },
 ];
 
 export const INITIAL_PERMANENT_ABILITIES: PermanentAbility[] = [

@@ -21,7 +21,7 @@ export interface GameModalsProps {
   players: Player[];
   tiles: Tile[];
   onBuyProperty: (tile: Tile) => void;
-  onBuildHouse: (tile: Tile) => { success: boolean; message?: string };
+  onBuildHouse: (tile: Tile, useAbilityId?: string) => { success: boolean; message?: string };
   onMortgageProperty: (tile: Tile) => void;
   onUnmortgageProperty: (tile: Tile) => void;
   onClosePropertyModal: () => void;
