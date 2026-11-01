@@ -29,7 +29,7 @@ export const BoardView: React.FC<Props> = ({
   };
 
   return (
-    <div className="relative w-full max-w-[850px] aspect-square mx-auto p-8 sm:p-10 select-none overflow-visible">
+    <div className="relative w-full max-w-[1050px] xl:max-w-[1150px] 2xl:max-w-[1250px] aspect-square mx-auto p-5 sm:p-6 lg:p-7 select-none overflow-visible">
       {/* Outer Board Box */}
       <div className="relative w-full h-full bg-[#ECE8DF] border-4 border-black rounded-lg shadow-2xl p-1.5 overflow-visible">
         {/* 11x11 Grid Board */}

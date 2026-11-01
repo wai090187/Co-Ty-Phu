@@ -98,8 +98,12 @@ export const TileItem: React.FC<TileItemProps> = ({
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col items-center justify-center px-0.5 py-0.5 text-center min-h-0 overflow-hidden">
         <span
-          className={`font-bold leading-tight line-clamp-2 text-slate-900 px-0.5 ${
-            tile.name.length > 18 ? 'text-[8px] sm:text-[8.5px]' : 'text-[8.5px] sm:text-[9.5px]'
+          className={`font-bold leading-[1.15] line-clamp-2 sm:line-clamp-3 text-slate-900 px-0.5 ${
+            tile.name.length > 20
+              ? 'text-[8.5px] sm:text-[9.5px] lg:text-[10.5px]'
+              : tile.name.length > 14
+              ? 'text-[9px] sm:text-[10px] lg:text-[11px]'
+              : 'text-[9.5px] sm:text-[11px] lg:text-[12px]'
           }`}
           title={tile.name}
         >
@@ -109,17 +113,17 @@ export const TileItem: React.FC<TileItemProps> = ({
       </div>
 
       {/* Price / Subtext Bar */}
-      <div className="shrink-0 px-0.5 py-0.2 text-center bg-black/5 border-t border-black/10">
+      <div className="shrink-0 px-0.5 py-0.5 text-center bg-black/5 border-t border-black/10">
         {tile.price ? (
-          <span className="text-[8px] sm:text-[9px] font-extrabold text-slate-800 tracking-tight">
+          <span className="text-[8.5px] sm:text-[9.5px] lg:text-[10.5px] font-extrabold text-slate-800 tracking-tight">
             {tile.price} đ
           </span>
         ) : tile.taxAmount ? (
-          <span className="text-[7.5px] sm:text-[8.5px] font-extrabold text-red-600">
+          <span className="text-[8px] sm:text-[9px] lg:text-[10px] font-extrabold text-red-600">
             {tile.taxAmount} đ
           </span>
         ) : (
-          <span className="text-[7px] sm:text-[7.5px] font-semibold text-slate-600 truncate block">
+          <span className="text-[7.5px] sm:text-[8.5px] lg:text-[9.5px] font-semibold text-slate-600 truncate block">
             {tile.type === 'station'
               ? 'Kỹ Năng'
               : tile.type === 'utility'

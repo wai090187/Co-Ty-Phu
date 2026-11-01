@@ -39,7 +39,7 @@ export const PlayerCard: React.FC<Props> = ({
 
   return (
     <div
-      className={`relative p-2.5 rounded-xl border-2 transition-all flex flex-col justify-between select-none ${
+      className={`relative p-2 rounded-xl border-2 transition-all flex flex-col justify-between select-none ${
         player.bankrupt
           ? 'bg-slate-200 border-slate-300 opacity-60'
           : isCurrentTurn
@@ -82,12 +82,12 @@ export const PlayerCard: React.FC<Props> = ({
             <span className="font-bold text-xs text-slate-900 truncate">{player.name}</span>
           </div>
 
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className="font-mono font-black text-sm text-emerald-700">
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span className="font-mono font-black text-xs sm:text-sm text-emerald-700">
               {player.bankrupt ? 'PHÁ SẢN' : `${player.cash} đ`}
             </span>
             {isCurrentTurn && (
-              <span className="px-1.5 py-0.2 bg-amber-500 text-white font-extrabold text-[9px] rounded uppercase animate-pulse">
+              <span className="px-1.5 py-0.2 bg-amber-500 text-white font-extrabold text-[8.5px] rounded uppercase animate-pulse">
                 Lượt đi
               </span>
             )}
@@ -97,7 +97,7 @@ export const PlayerCard: React.FC<Props> = ({
 
       {/* Interactive Hoverable Stats Bar */}
       {!player.bankrupt && (
-        <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-700 font-medium relative">
+        <div className="mt-1.5 pt-1.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-1 text-[9.5px] sm:text-[10px] text-slate-700 font-medium relative">
           {/* Properties with Quick Hover */}
           <div
             className="relative cursor-pointer hover:text-amber-800"

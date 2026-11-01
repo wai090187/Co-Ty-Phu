@@ -127,7 +127,7 @@ export const CheatModal: React.FC<Props> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-2 sm:p-4 animate-in fade-in duration-150">
       <div className="w-full max-w-4xl bg-slate-900 border-2 border-rose-500 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] text-white">
         {/* Header */}
-        <div className="p-3.5 bg-gradient-to-r from-rose-950 via-slate-900 to-rose-950 border-b border-rose-500/50 flex items-center justify-between">
+        <div className="shrink-0 p-3.5 bg-gradient-to-r from-rose-950 via-slate-900 to-rose-950 border-b border-rose-500/50 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center text-xl font-bold shadow-md shadow-rose-600/40">
               🛠️
@@ -155,7 +155,7 @@ export const CheatModal: React.FC<Props> = ({
         </div>
 
         {/* Player Selector Bar */}
-        <div className="px-4 py-2 bg-slate-950/80 border-b border-slate-800 flex items-center gap-2 overflow-x-auto">
+        <div className="shrink-0 px-4 py-2.5 bg-slate-950/80 border-b border-slate-800 flex items-center gap-2 overflow-x-auto">
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1">
             Chọn Người Chơi:
           </span>
@@ -188,12 +188,12 @@ export const CheatModal: React.FC<Props> = ({
         </div>
 
         {/* Navigation Tabs */}
-        <div className="px-4 bg-slate-800/80 border-b border-slate-700 flex gap-2 overflow-x-auto text-xs font-bold">
+        <div className="shrink-0 px-4 bg-slate-800/90 border-b border-slate-700 flex gap-2 overflow-x-auto text-xs font-bold min-h-[44px]">
           <button
             onClick={() => setActiveTab('properties')}
-            className={`py-2.5 px-3 border-b-2 flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+            className={`py-2.5 px-3.5 border-b-2 flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 ${
               activeTab === 'properties'
-                ? 'border-rose-400 text-rose-300 bg-slate-800'
+                ? 'border-rose-400 text-rose-300 bg-slate-800/80'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -203,9 +203,9 @@ export const CheatModal: React.FC<Props> = ({
 
           <button
             onClick={() => setActiveTab('skills')}
-            className={`py-2.5 px-3 border-b-2 flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+            className={`py-2.5 px-3.5 border-b-2 flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 ${
               activeTab === 'skills'
-                ? 'border-rose-400 text-rose-300 bg-slate-800'
+                ? 'border-rose-400 text-rose-300 bg-slate-800/80'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -215,9 +215,9 @@ export const CheatModal: React.FC<Props> = ({
 
           <button
             onClick={() => setActiveTab('dice')}
-            className={`py-2.5 px-3 border-b-2 flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+            className={`py-2.5 px-3.5 border-b-2 flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 ${
               activeTab === 'dice'
-                ? 'border-rose-400 text-rose-300 bg-slate-800'
+                ? 'border-rose-400 text-rose-300 bg-slate-800/80'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -227,9 +227,9 @@ export const CheatModal: React.FC<Props> = ({
 
           <button
             onClick={() => setActiveTab('cards')}
-            className={`py-2.5 px-3 border-b-2 flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+            className={`py-2.5 px-3.5 border-b-2 flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 ${
               activeTab === 'cards'
-                ? 'border-rose-400 text-rose-300 bg-slate-800'
+                ? 'border-rose-400 text-rose-300 bg-slate-800/80'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -239,9 +239,9 @@ export const CheatModal: React.FC<Props> = ({
 
           <button
             onClick={() => setActiveTab('quick')}
-            className={`py-2.5 px-3 border-b-2 flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+            className={`py-2.5 px-3.5 border-b-2 flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 ${
               activeTab === 'quick'
-                ? 'border-rose-400 text-rose-300 bg-slate-800'
+                ? 'border-rose-400 text-rose-300 bg-slate-800/80'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -251,7 +251,7 @@ export const CheatModal: React.FC<Props> = ({
         </div>
 
         {/* Tab Content Body */}
-        <div className="p-4 overflow-y-auto flex-1 text-xs">
+        <div className="p-4 overflow-y-auto flex-1 min-h-0 text-xs">
           {/* TAB 1: PROPERTIES & HOUSES */}
           {activeTab === 'properties' && (
             <div className="flex flex-col gap-3">
@@ -904,7 +904,7 @@ export const CheatModal: React.FC<Props> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs">
+        <div className="shrink-0 p-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs">
           <span className="text-slate-500 text-[11px]">
             Nhấn <kbd className="px-1.5 py-0.5 bg-slate-800 text-slate-300 rounded border border-slate-700 font-mono">Esc</kbd> để đóng bảng Cheat.
           </span>

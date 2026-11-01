@@ -53,9 +53,9 @@ export const GamePlayScreen: React.FC<Props> = ({
   onEndTurn,
 }) => {
   return (
-    <main className="flex-1 p-2 sm:p-4 flex flex-col lg:flex-row gap-4 max-w-[1440px] mx-auto w-full items-start justify-center">
+    <main className="flex-1 p-2 sm:p-3 flex flex-col lg:flex-row gap-2.5 sm:gap-3 max-w-[1680px] mx-auto w-full items-start justify-center">
       {/* Left Column: Player Cards HUD */}
-      <section className="w-full lg:w-72 flex flex-col gap-2 shrink-0">
+      <section className="w-full lg:w-56 xl:w-60 flex flex-col gap-2 shrink-0">
         <span className="font-display font-black text-xs text-slate-700 uppercase tracking-wider px-1">
           Bảng Người Chơi ({players.length})
         </span>
@@ -77,7 +77,7 @@ export const GamePlayScreen: React.FC<Props> = ({
       </section>
 
       {/* Center Column: The 40-Tile Board */}
-      <section className="flex-1 w-full flex flex-col items-center">
+      <section className="flex-1 w-full flex flex-col items-center min-w-0">
         <BoardView
           tiles={tiles}
           players={players}
@@ -87,7 +87,7 @@ export const GamePlayScreen: React.FC<Props> = ({
       </section>
 
       {/* Right Column: Controls & Game Log */}
-      <section className="w-full lg:w-72 flex flex-col gap-3 shrink-0">
+      <section className="w-full lg:w-64 xl:w-72 flex flex-col gap-3 shrink-0">
         <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col items-center gap-3">
           <div className="text-center">
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 block">
