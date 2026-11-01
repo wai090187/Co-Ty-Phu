@@ -15,6 +15,7 @@ import { usePropertyActions } from '../modules/game/hooks/usePropertyActions';
 import { useAbilityShopActions } from '../modules/game/hooks/useAbilityShopActions';
 import { useCardActions } from '../modules/game/hooks/useCardActions';
 import { useAIBotTurn } from '../modules/game/hooks/useAIBotTurn';
+import { applyLoadedGameState, extractCurrentSaveState } from '../modules/game/utils/saveStateHelper';
 
 export type { SetupPlayerConfig };
 
@@ -239,6 +240,14 @@ export const useMonopolyGame = () => {
     state.setPermanentShop(prev => prev.map(a => (a.id === abilityId ? { ...a, quantity } : a)));
   };
 
+  const loadSavedGame = useCallback((save: any) => {
+    applyLoadedGameState(state, save);
+  }, [state]);
+
+  const getCurrentSaveState = useCallback((configs: SetupPlayerConfig[]) => {
+    return extractCurrentSaveState(state, configs);
+  }, [state]);
+
   return {
     ...state,
     activePlayer,
@@ -264,5 +273,7 @@ export const useMonopolyGame = () => {
     updatePermanentQuantity,
     triggerCashTransfer,
     triggerCharacterEvent,
+    loadSavedGame,
+    getCurrentSaveState,
   };
 };

@@ -6,13 +6,17 @@ import { GameSetupScreen } from './modules/game/components/GameSetupScreen';
 import { GamePlayScreen } from './modules/game/components/GamePlayScreen';
 import { GameModalsContainer } from './modules/game/components/GameModalsContainer';
 import { CharacterEventStage } from './components/Effects/CharacterEventStage';
+import { SaveLoadModal } from './components/Modals/SaveLoadModal';
+import { useSaveGame } from './modules/game/hooks/useSaveGame';
 import { DEFAULT_PLAYER_COLORS, INITIAL_PLAYER_CONFIGS } from './modules/game/constants/defaultSetup';
 import { AIDifficulty, Character, Player } from './types/game';
 
 export default function App() {
   const game = useMonopolyGame();
+  const saveGame = useSaveGame();
   const [playerConfigs, setPlayerConfigs] = useState<SetupPlayerConfig[]>(INITIAL_PLAYER_CONFIGS);
   const [showSettings, setShowSettings] = useState(false);
+  const [showSaveLoadModal, setShowSaveLoadModal] = useState(false);
   const [showInventoryPlayerId, setShowInventoryPlayerId] = useState<number | null>(null);
   const [pickingCharacterPlayerIdx, setPickingCharacterPlayerIdx] = useState<number | null>(null);
 
@@ -66,6 +70,19 @@ export default function App() {
     return [];
   };
 
+  const handleSaveToSlot = (slotId: number) => {
+    const stateToSave = game.getCurrentSaveState(playerConfigs);
+    saveGame.saveGameToSlot(slotId, stateToSave);
+    game.addLog(`💾 Đã lưu trận đấu vào Ô lưu ${slotId}!`, 'info');
+  };
+
+  const handleLoadFromSlot = (saveData: any) => {
+    game.loadSavedGame(saveData);
+    if (saveData.playerConfigs) {
+      setPlayerConfigs(saveData.playerConfigs);
+    }
+  };
+
   const activePropertyOwner = game.activePropertyModalTile
     ? game.players.find(p => p.propertiesOwned.includes(game.activePropertyModalTile!.id))
     : undefined;
@@ -81,6 +98,7 @@ export default function App() {
         isPlaying={game.isPlaying}
         currentRound={game.currentRound}
         onOpenSettings={() => setShowSettings(true)}
+        onOpenSaveLoad={() => setShowSaveLoadModal(true)}
       />
 
       {!game.isPlaying ? (
@@ -212,6 +230,17 @@ export default function App() {
           event={game.characterEvent}
           player={game.players.find(p => p.id === game.characterEvent!.playerId)!}
           onDismiss={() => game.setCharacterEvent(null)}
+        />
+      )}
+
+      {showSaveLoadModal && (
+        <SaveLoadModal
+          slots={saveGame.slots}
+          isPlaying={game.isPlaying}
+          onSaveToSlot={handleSaveToSlot}
+          onLoadFromSlot={handleLoadFromSlot}
+          onDeleteSlot={saveGame.deleteSlot}
+          onClose={() => setShowSaveLoadModal(false)}
         />
       )}
     </div>

@@ -4,12 +4,14 @@ interface Props {
   isPlaying: boolean;
   currentRound: number;
   onOpenSettings: () => void;
+  onOpenSaveLoad: () => void;
 }
 
 export const GameHeader: React.FC<Props> = ({
   isPlaying,
   currentRound,
   onOpenSettings,
+  onOpenSaveLoad,
 }) => {
   return (
     <header className="bg-slate-900 text-white border-b-2 border-amber-600 px-4 py-2.5 flex items-center justify-between shadow-md z-30">
@@ -34,6 +36,15 @@ export const GameHeader: React.FC<Props> = ({
             <span className="font-bold text-amber-400 font-mono">{currentRound}</span>
           </div>
         )}
+
+        <button
+          onClick={onOpenSaveLoad}
+          className="px-3 py-1.5 rounded-lg bg-amber-600/90 hover:bg-amber-600 text-white font-bold text-xs flex items-center gap-1.5 transition-colors border border-amber-500/50 shadow-xs"
+          title="Lưu hoặc tải trận đấu"
+        >
+          <span>💾</span>
+          <span className="hidden sm:inline">Lưu / Tải</span>
+        </button>
 
         <button
           onClick={onOpenSettings}
