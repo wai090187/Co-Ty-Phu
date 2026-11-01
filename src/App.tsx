@@ -5,7 +5,6 @@ import { GameHeader } from './modules/game/components/GameHeader';
 import { GameSetupScreen } from './modules/game/components/GameSetupScreen';
 import { GamePlayScreen } from './modules/game/components/GamePlayScreen';
 import { GameModalsContainer } from './modules/game/components/GameModalsContainer';
-import { CashTransferEffect } from './components/Effects/CashTransferEffect';
 import { CharacterEventStage } from './components/Effects/CharacterEventStage';
 import { DEFAULT_PLAYER_COLORS, INITIAL_PLAYER_CONFIGS } from './modules/game/constants/defaultSetup';
 import { AIDifficulty, Character, Player } from './types/game';
@@ -207,14 +206,6 @@ export default function App() {
         winner={game.winner}
         onRestartGame={() => game.startNewGame(playerConfigs)}
       />
-
-      {game.cashTransferEvent && (
-        <CashTransferEffect
-          event={game.cashTransferEvent}
-          players={game.players}
-          onDismiss={() => game.setCashTransferEvent(null)}
-        />
-      )}
 
       {game.characterEvent && (
         <CharacterEventStage

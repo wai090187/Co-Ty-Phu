@@ -8,31 +8,6 @@ interface GameEventsContext {
 }
 
 export const useGameEvents = (ctx: GameEventsContext) => {
-  const triggerCashTransfer = useCallback(
-    (payerId: number | undefined, receiverIds: number[], amount: number, reason: string) => {
-      ctx.setCashTransferEvent({
-        id: `transfer-${Date.now()}-${Math.random()}`,
-        payerId,
-        receiverIds,
-        amount,
-        reason,
-        timestamp: Date.now(),
-      });
-      ctx.setPlayers(prev =>
-        prev.map(p => {
-          if (payerId !== undefined && p.id === payerId) {
-            return { ...p, emotion: 'sad', emotionMessage: `-${amount}đ`, emotionTimestamp: Date.now() };
-          }
-          if (receiverIds.includes(p.id)) {
-            return { ...p, emotion: 'happy', emotionMessage: `+${amount}đ`, emotionTimestamp: Date.now() };
-          }
-          return p;
-        })
-      );
-    },
-    [ctx]
-  );
-
   const triggerCharacterEvent = useCallback(
     (
       playerId: number,
@@ -61,6 +36,52 @@ export const useGameEvents = (ctx: GameEventsContext) => {
       );
     },
     [ctx]
+  );
+
+  const triggerCashTransfer = useCallback(
+    (payerId: number | undefined, receiverIds: number[], amount: number, reason: string) => {
+      ctx.setCashTransferEvent({
+        id: `transfer-${Date.now()}-${Math.random()}`,
+        payerId,
+        receiverIds,
+        amount,
+        reason,
+        timestamp: Date.now(),
+      });
+      ctx.setPlayers(prev =>
+        prev.map(p => {
+          if (payerId !== undefined && p.id === payerId) {
+            return { ...p, emotion: 'sad', emotionMessage: `-${amount}đ`, emotionTimestamp: Date.now() };
+          }
+          if (receiverIds.includes(p.id)) {
+            return { ...p, emotion: 'happy', emotionMessage: `+${amount}đ`, emotionTimestamp: Date.now() };
+          }
+          return p;
+        })
+      );
+
+      // Bottom-right toast trigger
+      if (payerId !== undefined && payerId > 0) {
+        triggerCharacterEvent(
+          payerId,
+          'money_transfer',
+          'sad',
+          'Giao Dịch Chuyển Tiền',
+          `${reason}`,
+          -amount
+        );
+      } else if (receiverIds.length > 0 && receiverIds[0] > 0) {
+        triggerCharacterEvent(
+          receiverIds[0],
+          'money_transfer',
+          'happy',
+          'Nhận Tiền Thưởng',
+          `${reason}`,
+          amount
+        );
+      }
+    },
+    [ctx, triggerCharacterEvent]
   );
 
   return {
