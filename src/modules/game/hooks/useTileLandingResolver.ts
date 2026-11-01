@@ -241,13 +241,26 @@ export const useTileLandingResolver = (ctx: LandingContext) => {
             ctx.setActiveDrawnCard(drawn);
           }
         }
-        // 7. Go to Jail
+        // 7. Go to Jail / Investigation
         else if (tile.type === 'corner' && tile.cornerType === 'gotojail') {
           sounds.jail();
           player.position = 10;
           player.inJail = true;
           player.jailTurns = 0;
-          ctx.addLog(`🚨 ${player.name} vào ô Bị Bắt: Phải vào tù ngay lập tức!`, 'jail');
+          const isInv = ctx.settings.jailMode === 'investigation';
+          const msg = isInv
+            ? `🚨 ${player.name}: Đang bị công an điều tra vì buôn bán nhà ở trái phép!`
+            : `🚨 ${player.name} vào ô Bị Bắt: Phải vào tù ngay lập tức!`;
+          ctx.addLog(msg, 'jail');
+          ctx.triggerCharacterEvent(
+            player.id,
+            'investigation_jailed',
+            'sad',
+            isInv ? 'Bị Công An Điều Tra' : 'Bị Bắt Vào Tù',
+            isInv
+              ? `${player.name} đang bị công an điều tra vì buôn bán nhà ở trái phép!`
+              : `${player.name} bị áp giải vào tù!`
+          );
         }
 
         return [...prevPlayers];

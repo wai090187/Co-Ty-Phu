@@ -53,6 +53,41 @@ export const CharacterIllustration2D5: React.FC<CharacterIllustration2D5Props> =
         return <CongTuIllustration emotion={emotion} />;
       case 'co-ba':
         return <CoBaIllustration emotion={emotion} />;
+      case 'linh-ho':
+        return (
+          <g transform={`translate(0, ${emotion === 'happy' ? -6 : emotion === 'sad' ? 6 : 0})`}>
+            <image
+              href="/assets/characters/linh-ho.png"
+              x="16"
+              y="12"
+              width="128"
+              height="150"
+              preserveAspectRatio="xMidYMid meet"
+            />
+            <circle cx="34" cy="70" r="5" fill="#38BDF8" opacity="0.8" />
+            <circle cx="126" cy="65" r="4" fill="#67E8F9" opacity="0.8" />
+          </g>
+        );
+      case 'ahri':
+        return (
+          <g transform={`translate(0, ${emotion === 'happy' ? -6 : emotion === 'sad' ? 6 : 0})`}>
+            <clipPath id="ahri-2d5-clip">
+              <rect x="22" y="10" width="116" height="152" rx="18" />
+            </clipPath>
+            <image
+              href="/assets/characters/ahri.jpg"
+              x="20"
+              y="10"
+              width="120"
+              height="152"
+              preserveAspectRatio="xMidYMid meet"
+              clipPath="url(#ahri-2d5-clip)"
+            />
+            <circle cx="48" cy="94" r="14" fill="#38BDF8" opacity="0.4" />
+            <circle cx="48" cy="94" r="8" fill="#E0F2FE" />
+            <circle cx="48" cy="94" r="4.5" fill="#0284C7" />
+          </g>
+        );
       default:
         return <GenericHeroIllustration characterId={characterId} emotion={emotion} />;
     }

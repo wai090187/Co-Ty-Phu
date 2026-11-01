@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Character } from '../../types/game';
 import { CHARACTERS } from '../../data/characters';
 import { CharacterAvatar } from '../Common/CharacterAvatar';
+import { CharacterIllustration2D5 } from '../Common/CharacterIllustration2D5';
 
 interface Props {
   selectedCharacterId: string;
@@ -37,10 +38,10 @@ export const CharacterSelectModal: React.FC<Props> = ({
         <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
           <div>
             <h2 className="font-display text-lg font-black tracking-wide uppercase">
-              Chọn Nhân Vật 2D Cho {playerName}
+              Chọn Nhân Vật 2.5D Cho {playerName}
             </h2>
             <span className="text-xs text-slate-300">
-              10 Phong Cách Nghệ Thuật: Retro, Anime, Gothic, Steampunk, Cyberpunk...
+              12 Danh Tướng & Linh Thú Đa Phong Cách: Hồ Ly, Anime, Retro, Chibi...
             </span>
           </div>
           <button
@@ -53,9 +54,11 @@ export const CharacterSelectModal: React.FC<Props> = ({
 
         {/* Character Detail Showcase & Grid */}
         <div className="p-4 flex-1 overflow-y-auto flex flex-col md:flex-row gap-4">
-          {/* Left: Active Character Card */}
-          <div className="w-full md:w-60 bg-white border-2 border-slate-200 rounded-xl p-4 flex flex-col items-center text-center shadow-sm shrink-0">
-            <CharacterAvatar characterId={activeChar.id} size="xl" className="mb-3 ring-4 ring-amber-400" />
+          {/* Left: Active Character Card with 2.5D Illustration */}
+          <div className="w-full md:w-60 bg-white border-2 border-slate-200 rounded-xl p-3 flex flex-col items-center text-center shadow-sm shrink-0">
+            <div className="h-44 w-full flex items-center justify-center mb-1">
+              <CharacterIllustration2D5 characterId={activeChar.id} size="lg" emotion="happy" showPedestal={true} />
+            </div>
             <h3 className="font-display text-lg font-black text-slate-900 uppercase">
               {activeChar.name}
             </h3>

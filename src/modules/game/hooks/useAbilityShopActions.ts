@@ -124,6 +124,13 @@ export const useAbilityShopActions = (ctx: AbilityContext) => {
       }
 
       sounds.ability();
+      ctx.triggerCharacterEvent(
+        ctx.activePlayer.id,
+        'use_ability',
+        'action',
+        'Kích Hoạt Kỹ Năng',
+        `${ctx.activePlayer.name} vừa thi triển [${ability.name}]!`
+      );
       ctx.setPlayers(prev => {
         const next = [...prev];
         const p = next.find(x => x.id === ctx.activePlayer!.id);

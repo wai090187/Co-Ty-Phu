@@ -36,6 +36,7 @@ export interface Character {
   quote: string;
   themeColor: string;
   avatarSvg: string;
+  imageUrl?: string;
 }
 
 export interface Player {

@@ -96,6 +96,14 @@ export const usePropertyActions = (ctx: PropertyOpsContext) => {
       );
 
       ctx.triggerCashTransfer(ctx.activePlayer.id, [], tile.houseCost, `Xây nhà trên [${tile.name}]`);
+      ctx.triggerCharacterEvent(
+        ctx.activePlayer.id,
+        'upgrade_house',
+        'happy',
+        'Nâng Cấp Công Trình',
+        `${ctx.activePlayer.name} vừa xây thêm nhà tại [${tile.name}]!`,
+        -tile.houseCost
+      );
       ctx.addLog(
         `🔨 ${ctx.activePlayer.name} xây thêm 1 cấp nhà trên [${tile.name}] (${currentHouses + 1} nhà)`,
         'property'
@@ -177,8 +185,24 @@ export const usePropertyActions = (ctx: PropertyOpsContext) => {
       })
     );
 
-    ctx.triggerCashTransfer(ctx.activePlayer.id, [], bailCheck.cost, 'Bảo lãnh ra tù');
-    ctx.addLog(`🏛️ ${ctx.activePlayer.name} nộp bảo lãnh ${bailCheck.cost}đ và được tự do!`, 'jail');
+    const isInv = ctx.settings.jailMode === 'investigation';
+    const actionTitle = isInv ? 'Khắc Phục Xóa Án' : 'Bảo Lãnh Tự Do';
+    const actionDesc = isInv
+      ? `🏛️ ${ctx.activePlayer.name} nộp khắc phục ${bailCheck.cost}đ và được xóa án điều tra!`
+      : `🏛️ ${ctx.activePlayer.name} nộp bảo lãnh ${bailCheck.cost}đ và được tự do!`;
+
+    ctx.triggerCashTransfer(ctx.activePlayer.id, [], bailCheck.cost, actionTitle);
+    ctx.triggerCharacterEvent(
+      ctx.activePlayer.id,
+      'cleared_investigation',
+      'happy',
+      actionTitle,
+      isInv
+        ? `${ctx.activePlayer.name} đã hoàn tất nộp khắc phục, chính thức được xóa án điều tra!`
+        : `${ctx.activePlayer.name} đã nộp bảo lãnh và được trả tự do!`,
+      -bailCheck.cost
+    );
+    ctx.addLog(actionDesc, 'jail');
   }, [ctx]);
 
   return {

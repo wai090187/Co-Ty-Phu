@@ -72,6 +72,19 @@ export const CharacterAvatar: React.FC<CharacterAvatarProps> = ({
       case 'nu-hoang-hoang-gia':
         return <RoyalQueenAvatarSvg />;
       case 'chibi-dung-si':
+        return <ChibiHeroAvatarSvg />;
+      case 'linh-ho':
+        return (
+          <div className="w-full h-full bg-gradient-to-b from-sky-400 to-indigo-700 flex items-center justify-center p-0.5">
+            <img src="/assets/characters/linh-ho.png" alt="Tiểu Linh Hồ" className="w-full h-full object-contain" />
+          </div>
+        );
+      case 'ahri':
+        return (
+          <div className="w-full h-full bg-gradient-to-b from-rose-500 to-pink-700 flex items-center justify-center p-0.5">
+            <img src="/assets/characters/ahri.jpg" alt="Ahri" className="w-full h-full object-cover rounded-xl" />
+          </div>
+        );
       default:
         return <ChibiHeroAvatarSvg />;
     }

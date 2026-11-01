@@ -105,7 +105,19 @@ export default function App() {
           isRolling={game.isRolling}
           isMovingStepByStep={game.isMovingStepByStep}
           logs={game.logs}
-          onOpenInventory={id => setShowInventoryPlayerId(id)}
+          onOpenInventory={id => {
+            setShowInventoryPlayerId(id);
+            const p = game.players.find(x => x.id === id);
+            if (p) {
+              game.triggerCharacterEvent(
+                p.id,
+                'open_inventory',
+                'action',
+                'Mở Túi Đồ',
+                `${p.name} đang kiểm tra kho trang bị & kỹ năng`
+              );
+            }
+          }}
           onPayBail={game.payBail}
           canPlayerPayBail={game.canPlayerPayBail}
           onSelectTile={tile => {

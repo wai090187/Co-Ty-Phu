@@ -124,10 +124,12 @@ export const useMonopolyGame = () => {
   // Hook 4: Card operations
   const { executeDrawnCard } = useCardActions({
     activePlayer,
+    settings: state.settings,
     setPlayers: state.setPlayers,
     setActiveDrawnCard: state.setActiveDrawnCard,
     addLog: state.addLog,
     triggerCashTransfer,
+    triggerCharacterEvent,
     resolveTileLanding,
     handleBankrupt,
   });

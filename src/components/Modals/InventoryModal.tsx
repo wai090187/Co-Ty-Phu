@@ -1,5 +1,6 @@
 import React from 'react';
 import { ConsumableAbility, PermanentAbility, Player, Tile } from '../../types/game';
+import { CharacterIllustration2D5 } from '../Common/CharacterIllustration2D5';
 
 interface Props {
   player: Player;
@@ -39,13 +40,26 @@ export const InventoryModal: React.FC<Props> = ({
       <div className="w-full max-w-lg bg-[#FAF8F5] border-2 border-slate-900 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
-          <div>
-            <h2 className="font-display text-lg font-black tracking-wide uppercase">
-              Túi Đồ & Năng Lực Của Bạn
-            </h2>
-            <span className="text-xs text-slate-300">
-              {player.name} · Tiền mặt: <b className="text-emerald-400 font-mono">{player.cash} đ</b>
-            </span>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-14 shrink-0 flex items-center justify-center">
+              <CharacterIllustration2D5
+                characterId={player.characterId}
+                isAI={player.isAI}
+                aiNumber={player.id}
+                aiLevel={player.aiLevel}
+                emotion="action"
+                size="sm"
+                showPedestal={false}
+              />
+            </div>
+            <div>
+              <h2 className="font-display text-lg font-black tracking-wide uppercase">
+                Túi Đồ & Năng Lực Của Bạn
+              </h2>
+              <span className="text-xs text-slate-300">
+                {player.name} · Tiền mặt: <b className="text-emerald-400 font-mono">{player.cash} đ</b>
+              </span>
+            </div>
           </div>
           <button
             onClick={onClose}
