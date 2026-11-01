@@ -56,6 +56,7 @@ export const useMovementController = (ctx: MovementContext) => {
         }
 
         ctx.remainingStepsRef.current -= 1;
+        const isFinalStep = ctx.remainingStepsRef.current === 0;
 
         ctx.setPlayers(prev => {
           return prev.map(p => {
@@ -65,25 +66,27 @@ export const useMovementController = (ctx: MovementContext) => {
             sounds.step();
 
             if (newPos === 0) {
-              let exactBonus = ctx.settings.goExactBonus ?? 400;
-              if (ctx.settings.jailMode === 'investigation' && p.inJail) {
-                const red = Math.round(exactBonus * (ctx.settings.investigationIncomePenaltyPercent / 100));
-                exactBonus = Math.max(0, exactBonus - red);
-                ctx.addLog(`📉 [Đang Bị Điều Tra] ${p.name} bị trừ tiền thưởng dừng Trạm Khởi Hành (-${red}đ)`, 'jail');
+              if (isFinalStep) {
+                let exactBonus = ctx.settings.goExactBonus ?? 400;
+                if (ctx.settings.jailMode === 'investigation' && p.inJail) {
+                  const red = Math.round(exactBonus * (ctx.settings.investigationIncomePenaltyPercent / 100));
+                  exactBonus = Math.max(0, exactBonus - red);
+                  ctx.addLog(`📉 [Đang Bị Điều Tra] ${p.name} bị trừ tiền thưởng dừng Trạm Khởi Hành (-${red}đ)`, 'jail');
+                }
+                p.cash += exactBonus;
+                ctx.triggerCashTransfer(0, [p.id], exactBonus, 'Thưởng dừng trúng ô Khởi Hành');
+                ctx.addLog(`🎉 ${p.name} dừng TRÚNG Ô [Trạm khởi hành] nhận thưởng ${exactBonus}đ!`, 'money');
+              } else {
+                let passBonus = ctx.settings.goPassBonus ?? 200;
+                if (ctx.settings.jailMode === 'investigation' && p.inJail) {
+                  const red = Math.round(passBonus * (ctx.settings.investigationIncomePenaltyPercent / 100));
+                  passBonus = Math.max(0, passBonus - red);
+                  ctx.addLog(`📉 [Đang Bị Điều Tra] ${p.name} bị trừ tiền thưởng đi qua Trạm Khởi Hành (-${red}đ)`, 'jail');
+                }
+                p.cash += passBonus;
+                ctx.triggerCashTransfer(0, [p.id], passBonus, 'Thưởng đi qua ô Khởi Hành');
+                ctx.addLog(`🎁 ${p.name} đi QUA [Trạm khởi hành] nhận thưởng ${passBonus}đ`, 'money');
               }
-              p.cash += exactBonus;
-              ctx.triggerCashTransfer(0, [p.id], exactBonus, 'Thưởng dừng trúng ô Khởi Hành');
-              ctx.addLog(`🎉 ${p.name} dừng TRÚNG Ô [Trạm khởi hành] nhận thưởng ${exactBonus}đ!`, 'money');
-            } else if (oldPos > newPos) {
-              let passBonus = ctx.settings.goPassBonus ?? 200;
-              if (ctx.settings.jailMode === 'investigation' && p.inJail) {
-                const red = Math.round(passBonus * (ctx.settings.investigationIncomePenaltyPercent / 100));
-                passBonus = Math.max(0, passBonus - red);
-                ctx.addLog(`📉 [Đang Bị Điều Tra] ${p.name} bị trừ tiền thưởng đi qua Trạm Khởi Hành (-${red}đ)`, 'jail');
-              }
-              p.cash += passBonus;
-              ctx.triggerCashTransfer(0, [p.id], passBonus, 'Thưởng đi qua ô Khởi Hành');
-              ctx.addLog(`🎁 ${p.name} đi QUA [Trạm khởi hành] nhận thưởng ${passBonus}đ`, 'money');
             }
 
             return { ...p, position: newPos };
@@ -117,7 +120,16 @@ export const useMovementController = (ctx: MovementContext) => {
         const newPos = (oldPos + stepsToJump) % 40;
         const passedGo = oldPos + stepsToJump >= 40;
 
-        if (passedGo) {
+        if (newPos === 0) {
+          let exactBonus = ctx.settings.goExactBonus ?? 400;
+          if (ctx.settings.jailMode === 'investigation' && p.inJail) {
+            const red = Math.round(exactBonus * (ctx.settings.investigationIncomePenaltyPercent / 100));
+            exactBonus = Math.max(0, exactBonus - red);
+          }
+          p.cash += exactBonus;
+          ctx.triggerCashTransfer(0, [p.id], exactBonus, 'Thưởng dừng trúng ô Khởi Hành');
+          ctx.addLog(`🎉 ${p.name} dừng TRÚNG Ô [Trạm khởi hành] (+${exactBonus}đ)`, 'money');
+        } else if (passedGo) {
           let passBonus = ctx.settings.goPassBonus ?? 200;
           if (ctx.settings.jailMode === 'investigation' && p.inJail) {
             const red = Math.round(passBonus * (ctx.settings.investigationIncomePenaltyPercent / 100));
