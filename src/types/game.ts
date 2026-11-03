@@ -66,26 +66,28 @@ export interface Player {
 }
 
 export type TriggerCondition =
-  | 'when_roll_dice'
-  | 'when_neighbor'
+  | 'instant_on_buy'          // Tự động kích hoạt ngay sau khi mua
+  | 'when_roll_dice'          // Khi tung xúc xắc
+  | 'when_neighbor'           // Khi đứng cạnh người chơi khác (khoảng cách 1 ô)
   | 'when_same_tile'          // Đứng cùng ô với người chơi khác
   | 'when_own_property'       // Đứng tại đất của mình
   | 'when_opponent_property'  // Đứng tại đất đối thủ
-  | 'when_land_corner'
-  | 'when_pay_tax'
-  | 'when_pay_rent'
-  | 'when_visit_station'
-  | 'manual_anytime';
+  | 'when_land_corner'        // Khi dừng tại 4 ô góc
+  | 'when_pay_tax'            // Khi phải nộp thuế
+  | 'when_pay_rent'           // Khi phải trả tiền thuê
+  | 'when_visit_station'      // Khi đến ô Sân bay / Bến xe
+  | 'manual_anytime';         // Chủ động bấm dùng trong túi đồ
 
 export type AbilityTargetScope =
+  | 'self'                    // Đến bản thân
+  | 'target_opponent'         // Đến đối thủ (người phát sinh quan hệ tương tác trong lượt: chủ đất, người cùng ô...)
   | 'target_choose_1'         // Lựa chọn 1 người chơi
   | 'target_choose_2'         // Lựa chọn 2 người chơi
   | 'target_all_players'      // Tất cả người chơi
   | 'target_adjacent_turns'   // Người chơi có số thứ tự lượt tung xúc xắc trước và sau bạn
   | 'target_richest'          // Người chơi giàu nhất
   | 'target_poorest'          // Người chơi nghèo nhất
-  | 'target_bank'             // Ngân hàng
-  | 'self';                   // Bản thân
+  | 'target_bank';            // Ngân hàng
 
 export interface ConsumableAbility {
   id: string;
@@ -99,6 +101,8 @@ export interface ConsumableAbility {
     | 'dice_boost' 
     | 'dice_reduce' 
     | 'free_tax' 
+    | 'free_tax_next_turn'
+    | 'free_rent'
     | 'half_rent' 
     | 'send_to_jail_neighbor' 
     | 'push_neighbor' 
@@ -109,6 +113,13 @@ export interface ConsumableAbility {
     | 'gain_cash_amount'
     | 'pay_cash_amount'
     | 'upgrade_house'
+    | 'free_upgrade_own_house'
+    | 'send_to_go'
+    | 'steal_cash_from_target'
+    | 'destroy_richest_highest_house'
+    | 'poorest_relief_bonus'
+    | 'send_adjacent_to_jail'
+    | 'steal_from_adjacent'
     | 'gain_cash_percent'
     | 'pay_cash_percent'
     | 'custom';

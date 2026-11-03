@@ -153,6 +153,7 @@ export const useMonopolyGame = () => {
     useConsumableAbility,
   } = useAbilityShopActions({
     activePlayer,
+    tiles: state.tiles,
     chanceDeck: state.chanceDeck,
     chestDeck: state.chestDeck,
     setPlayers: state.setPlayers,
@@ -233,6 +234,7 @@ export const useMonopolyGame = () => {
     setActiveStationModal: state.setActiveStationModal,
     setActiveUtilityModal: state.setActiveUtilityModal,
     setAiActionModalInfo: state.setAiActionModalInfo,
+    useConsumableAbility,
     endTurn,
   });
 

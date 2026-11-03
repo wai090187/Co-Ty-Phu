@@ -100,6 +100,27 @@ export const useTileLandingResolver = (ctx: LandingContext) => {
 
         ctx.addLog(`${player.name} dừng chân tại [${tile.name}]`, 'info');
 
+        // Check "when_same_tile" ability (e.g. bắt đối thủ cùng ô quay về khởi hành)
+        const sameTileOpponent = prevPlayers.find(
+          p => p.id !== player.id && !p.bankrupt && p.position === landedTileId
+        );
+        if (sameTileOpponent) {
+          const sameTileAbilityId = player.consumableAbilities.find(abId => {
+            const ab = ctx.consumableShop.find(x => x.id === abId);
+            return ab?.triggerCondition === 'when_same_tile' || ab?.effectType === 'send_to_go';
+          });
+          if (sameTileAbilityId) {
+            player.consumableAbilities = player.consumableAbilities.filter(id => id !== sameTileAbilityId);
+            sameTileOpponent.position = 0;
+            sounds.step();
+            const ab = ctx.consumableShop.find(x => x.id === sameTileAbilityId);
+            ctx.addLog(
+              `🌀 [${ab?.name || 'Trục Xuất Về Khởi Hành'}] ${player.name} đứng cùng ô với ${sameTileOpponent.name}, tự động bắt ${sameTileOpponent.name} quay về Trạm Khởi Hành (ô số 0)!`,
+              'ability'
+            );
+          }
+        }
+
         // Jail visit reward
         if (tile.id === 10) {
           prevPlayers.forEach(other => {
@@ -139,8 +160,28 @@ export const useTileLandingResolver = (ctx: LandingContext) => {
             ctx.setActivePropertyModalTile(tile);
             ctx.setIsLandingPropertyAction(true);
           } else if (owner.id === player.id) {
-            ctx.setActivePropertyModalTile(tile);
-            ctx.setIsLandingPropertyAction(true);
+            // Check if player has auto free house upgrade on own property
+            const freeUpgradeAbilityId = player.consumableAbilities.find(abId => {
+              const ab = ctx.consumableShop.find(x => x.id === abId);
+              return (
+                ab?.effectType === 'free_upgrade_own_house' ||
+                (ab?.triggerCondition === 'when_own_property' && ab?.effectType === 'upgrade_house')
+              );
+            });
+            const curHouses = player.houses[tile.id] || 0;
+            if (freeUpgradeAbilityId && curHouses < 5) {
+              player.consumableAbilities = player.consumableAbilities.filter(id => id !== freeUpgradeAbilityId);
+              player.houses[tile.id] = curHouses + 1;
+              sounds.buildHouse();
+              const ab = ctx.consumableShop.find(x => x.id === freeUpgradeAbilityId);
+              ctx.addLog(
+                `🔨 [${ab?.name || 'Nâng Cấp Nhà Miễn Phí'}] ${player.name} dừng tại ô đất của mình [${tile.name}], tự động nâng cấp thêm 1 cấp nhà hoàn toàn miễn phí (${curHouses + 1} nhà)!`,
+                'ability'
+              );
+            } else {
+              ctx.setActivePropertyModalTile(tile);
+              ctx.setIsLandingPropertyAction(true);
+            }
           } else {
             if (ctx.pendingDestroyHouseNext) {
               ctx.setPendingDestroyHouseNext(false);
@@ -156,42 +197,83 @@ export const useTileLandingResolver = (ctx: LandingContext) => {
             }
 
             if (!owner.mortgaged[tile.id]) {
-              let rent = calculatePropertyRent(tile, owner, ctx.tiles, ctx.settings);
-              if (player.hasHalfRentDiscountNextTurn) {
-                rent = Math.ceil(rent * 0.5);
-                player.hasHalfRentDiscountNextTurn = false;
-                ctx.addLog(`⚡ [Phiếu Giảm Giá 50%] Tiền thuê đất giảm còn ${rent}đ!`, 'ability');
-              }
+              // Check auto free rent ability on opponent property
+              const freeRentAbilityId = player.consumableAbilities.find(abId => {
+                const ab = ctx.consumableShop.find(x => x.id === abId);
+                return ab?.effectType === 'free_rent' || ab?.triggerCondition === 'when_opponent_property';
+              });
 
-              if (ctx.settings.jailMode === 'investigation') {
-                if (player.inJail) {
-                  const feeInc = Math.round(rent * (ctx.settings.investigationFeePenaltyPercent / 100));
-                  rent += feeInc;
-                  ctx.addLog(`📈 [Đang Bị Điều Tra] ${player.name} nộp phạt thêm tiền thuê (+${feeInc}đ)!`, 'jail');
-                }
-              }
-
-              let receivedRent = rent;
-              if (ctx.settings.jailMode === 'investigation' && owner.inJail) {
-                const incRed = Math.round(rent * (ctx.settings.investigationIncomePenaltyPercent / 100));
-                receivedRent = Math.max(0, rent - incRed);
-                ctx.addLog(`📉 [Đang Bị Điều Tra] Chủ đất ${owner.name} bị trừ tiền thuê thu được (-${incRed}đ)!`, 'jail');
-              }
-
-              if (player.cash >= rent) {
-                sounds.cash();
-                player.cash -= rent;
-                owner.cash += receivedRent;
-                ctx.triggerCashTransfer(player.id, [owner.id], rent, `Tiền thuê đất [${tile.name}]`);
-                ctx.addLog(`💸 ${player.name} trả tiền thuê đất ${rent}đ cho ${owner.name} tại [${tile.name}]`, 'money');
+              if (freeRentAbilityId) {
+                player.consumableAbilities = player.consumableAbilities.filter(id => id !== freeRentAbilityId);
+                sounds.ability();
+                const ab = ctx.consumableShop.find(x => x.id === freeRentAbilityId);
+                ctx.addLog(
+                  `🛡️ [${ab?.name || 'Miễn Phí Thuê Đất'}] ${player.name} tự động kích hoạt kỹ năng: Miễn 100% tiền thuê đất tại [${tile.name}] của ${owner.name}!`,
+                  'ability'
+                );
               } else {
-                handleBankrupt(player, owner);
+                let rent = calculatePropertyRent(tile, owner, ctx.tiles, ctx.settings);
+                if (player.hasHalfRentDiscountNextTurn) {
+                  rent = Math.ceil(rent * 0.5);
+                  player.hasHalfRentDiscountNextTurn = false;
+                  ctx.addLog(`⚡ [Phiếu Giảm Giá 50%] Tiền thuê đất giảm còn ${rent}đ!`, 'ability');
+                }
+
+                if (ctx.settings.jailMode === 'investigation') {
+                  if (player.inJail) {
+                    const feeInc = Math.round(rent * (ctx.settings.investigationFeePenaltyPercent / 100));
+                    rent += feeInc;
+                    ctx.addLog(`📈 [Đang Bị Điều Tra] ${player.name} nộp phạt thêm tiền thuê (+${feeInc}đ)!`, 'jail');
+                  }
+                }
+
+                let receivedRent = rent;
+                if (ctx.settings.jailMode === 'investigation' && owner.inJail) {
+                  const incRed = Math.round(rent * (ctx.settings.investigationIncomePenaltyPercent / 100));
+                  receivedRent = Math.max(0, rent - incRed);
+                  ctx.addLog(`📉 [Đang Bị Điều Tra] Chủ đất ${owner.name} bị trừ tiền thuê thu được (-${incRed}đ)!`, 'jail');
+                }
+
+                if (player.cash >= rent) {
+                  sounds.cash();
+                  player.cash -= rent;
+                  owner.cash += receivedRent;
+                  ctx.triggerCashTransfer(player.id, [owner.id], rent, `Tiền thuê đất [${tile.name}]`);
+                  ctx.addLog(`💸 ${player.name} trả tiền thuê đất ${rent}đ cho ${owner.name} tại [${tile.name}]`, 'money');
+                } else {
+                  handleBankrupt(player, owner);
+                }
               }
             }
           }
         }
         // 2. Station Tile
         else if (tile.type === 'station') {
+          // Check if player has "when_visit_station" ability (e.g. airport tourist toll from richest)
+          const stationTollAbilityId = player.consumableAbilities.find(abId => {
+            const ab = ctx.consumableShop.find(x => x.id === abId);
+            return ab?.triggerCondition === 'when_visit_station' || ab?.id === 'station-tourist-toll-richest';
+          });
+          if (stationTollAbilityId) {
+            const ab = ctx.consumableShop.find(x => x.id === stationTollAbilityId);
+            const amount = ab?.effectValue || ab?.value || 200;
+            const richestOpponent = prevPlayers
+              .filter(p => p.id !== player.id && !p.bankrupt)
+              .sort((a, b) => b.cash - a.cash)[0];
+            if (richestOpponent && richestOpponent.cash > 0) {
+              player.consumableAbilities = player.consumableAbilities.filter(id => id !== stationTollAbilityId);
+              const actual = Math.min(richestOpponent.cash, amount);
+              richestOpponent.cash -= actual;
+              player.cash += actual;
+              sounds.cash();
+              ctx.triggerCashTransfer(richestOpponent.id, [player.id], actual, 'Tài trợ du lịch Sân Bay');
+              ctx.addLog(
+                `✈️ [${ab?.name || 'Tài Trợ Du Lịch Sân Bay'}] ${player.name} đến Bến Xe / Sân Bay: Người giàu nhất ${richestOpponent.name} phải trả ${actual}đ tiền du lịch cho ${player.name}!`,
+                'ability'
+              );
+            }
+          }
+
           sounds.purchase();
           const unowned = ctx.consumableShop.filter(a => (a.quantity ?? 1) > 0);
           const shuffled = [...unowned].sort(() => 0.5 - Math.random());

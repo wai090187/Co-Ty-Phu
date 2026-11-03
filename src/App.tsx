@@ -290,6 +290,15 @@ export default function App() {
         onUpdatePermanentQuantity={game.updatePermanentQuantity}
         onAddCustomConsumable={ab => game.setConsumableShop(prev => [...prev, ab])}
         onAddCustomPermanent={ab => game.setPermanentShop(prev => [...prev, ab])}
+        onUpdateConsumable={ab => game.setConsumableShop(prev => prev.map(item => (item.id === ab.id ? ab : item)))}
+        onUpdatePermanent={ab => game.setPermanentShop(prev => prev.map(item => (item.id === ab.id ? ab : item)))}
+        onDeleteAbility={(id, kind) => {
+          if (kind === 'consumable') {
+            game.setConsumableShop(prev => prev.filter(item => item.id !== id));
+          } else {
+            game.setPermanentShop(prev => prev.filter(item => item.id !== id));
+          }
+        }}
         onCloseSettings={() => setShowSettings(false)}
         pickingCharacterPlayerIdx={pickingCharacterPlayerIdx}
         selectedCharacterId={

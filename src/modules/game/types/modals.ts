@@ -61,6 +61,9 @@ export interface GameModalsProps {
   onUpdatePermanentQuantity: (abilityId: string, quantity: number) => void;
   onAddCustomConsumable: (ability: ConsumableAbility) => void;
   onAddCustomPermanent: (ability: PermanentAbility) => void;
+  onUpdateConsumable?: (ability: ConsumableAbility) => void;
+  onUpdatePermanent?: (ability: PermanentAbility) => void;
+  onDeleteAbility?: (abilityId: string, kind: 'consumable' | 'permanent') => void;
   onCloseSettings: () => void;
 
   pickingCharacterPlayerIdx: number | null;
