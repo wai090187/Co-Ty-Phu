@@ -1,0 +1,6 @@
+{
+  "name": "Cờ Tỷ Phú Việt Nam - Sài Gòn Xưa",
+  "description": "Trò chơi cờ tỷ phú Việt Nam kinh điển với 40 ô bản đồ Sài Gòn xưa, hệ thống năng lực đặc biệt, đấu với AI thông minh hoặc nhiều người chơi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
