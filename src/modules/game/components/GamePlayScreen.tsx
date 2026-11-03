@@ -39,6 +39,7 @@ interface Props {
   onOpenCheat?: () => void;
   hasActiveCheat?: boolean;
   settings?: GameSettings;
+  onUseGetOutOfJailCard?: () => void;
 }
 
 export const GamePlayScreen: React.FC<Props> = ({
@@ -63,6 +64,7 @@ export const GamePlayScreen: React.FC<Props> = ({
   onOpenCheat,
   hasActiveCheat = false,
   settings,
+  onUseGetOutOfJailCard,
 }) => {
   const [isPlayersDrawerOpen, setIsPlayersDrawerOpen] = useState(false);
   const [isLogDrawerOpen, setIsLogDrawerOpen] = useState(false);
@@ -117,6 +119,9 @@ export const GamePlayScreen: React.FC<Props> = ({
           onOpenCheat={onOpenCheat}
           hasActiveCheat={hasActiveCheat}
           dramaticDiceRoll={settings?.dramaticDiceRoll ?? true}
+          onUseGetOutOfJailCard={onUseGetOutOfJailCard}
+          onPayBail={onPayBail}
+          bailInfo={canPlayerPayBail(activePlayer)}
         />
       </section>
 

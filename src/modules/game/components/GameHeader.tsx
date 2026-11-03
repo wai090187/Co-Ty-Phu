@@ -47,10 +47,13 @@ export const GameHeader: React.FC<Props> = ({
           <button
             onClick={onQuickSave}
             className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-emerald-600/90 hover:bg-emerald-600 text-white font-bold text-xs flex items-center gap-1.5 transition-all border border-emerald-500/50 shadow-xs active:scale-95"
-            title="Lưu nhanh ngay lập tức (không cần hỏi ghi đè)"
+            title="Lưu nhanh ngay lập tức (Phím tắt: Tab)"
           >
             <span>⚡</span>
             <span className="hidden sm:inline">Lưu Nhanh</span>
+            <kbd className="hidden md:inline px-1 py-0.2 text-[9px] bg-black/25 text-emerald-100 rounded border border-white/20 font-mono">
+              Tab
+            </kbd>
           </button>
         )}
 

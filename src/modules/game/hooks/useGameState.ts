@@ -27,35 +27,64 @@ export interface SetupPlayerConfig {
   color: string;
 }
 
+export const DEFAULT_SETTINGS: GameSettings = {
+  startingCash: 2000,
+  goExactBonus: 400,
+  goPassBonus: 200,
+  bailFeeBase: 100,
+  bailFeeRound10: 100,
+  bailFeeRound20: 200,
+  sameColorRentBoostPercent: 20,
+  jailRentPercent: 50,
+  maxConsumableAbilities: 3,
+  soundEnabled: true,
+  moveSpeed: 'normal',
+  jailVisitReward: 100,
+  bailMultiplierTurn1: 0,
+  bailMultiplierTurn2: 2,
+  bailMultiplierTurn3: 1,
+  vacantLandRentPercent: 20,
+  jailMode: 'investigation',
+  investigationIncomePenaltyPercent: 50,
+  investigationFeePenaltyPercent: 50,
+  aiTurnDelay: 2.0,
+  dramaticDiceRoll: true,
+  alwaysShowSidePanels: true,
+};
+
+const SETTINGS_STORAGE_KEY = 'co_ty_phu_settings_cache_v2';
+
+const loadCachedSettings = (): GameSettings => {
+  try {
+    const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return { ...DEFAULT_SETTINGS, ...parsed };
+    }
+  } catch (e) {
+    console.error('Failed to load cached settings', e);
+  }
+  return DEFAULT_SETTINGS;
+};
+
 export const useGameState = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentRound, setCurrentRound] = useState(1);
   const [turnIndex, setTurnIndex] = useState(0);
 
-  const [settings, setSettings] = useState<GameSettings>({
-    startingCash: 2000,
-    goExactBonus: 400,
-    goPassBonus: 200,
-    bailFeeBase: 100,
-    bailFeeRound10: 100,
-    bailFeeRound20: 200,
-    sameColorRentBoostPercent: 10,
-    jailRentPercent: 50,
-    maxConsumableAbilities: 3,
-    soundEnabled: true,
-    moveSpeed: 'normal',
-    jailVisitReward: 100,
-    bailMultiplierTurn1: 0,
-    bailMultiplierTurn2: 2,
-    bailMultiplierTurn3: 1,
-    vacantLandRentPercent: 10,
-    jailMode: 'prison',
-    investigationIncomePenaltyPercent: 50,
-    investigationFeePenaltyPercent: 50,
-    aiTurnDelay: 2.0,
-    dramaticDiceRoll: true,
-    alwaysShowSidePanels: false,
-  });
+  const [settings, setSettingsInternal] = useState<GameSettings>(loadCachedSettings);
+
+  const setSettings = useCallback((newSettings: GameSettings | ((prev: GameSettings) => GameSettings)) => {
+    setSettingsInternal(prev => {
+      const next = typeof newSettings === 'function' ? newSettings(prev) : newSettings;
+      try {
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(next));
+      } catch (e) {
+        console.error('Failed to cache settings', e);
+      }
+      return next;
+    });
+  }, []);
 
   const [hasMovedThisTurn, setHasMovedThisTurn] = useState(false);
   const [upgradesThisTurn, setUpgradesThisTurn] = useState(0);

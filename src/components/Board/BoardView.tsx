@@ -21,6 +21,9 @@ interface Props {
   onOpenCheat?: () => void;
   hasActiveCheat?: boolean;
   dramaticDiceRoll?: boolean;
+  onUseGetOutOfJailCard?: () => void;
+  onPayBail?: () => void;
+  bailInfo?: { canPay: boolean; cost: number; reason?: string };
 }
 
 export const BoardView: React.FC<Props> = ({
@@ -41,6 +44,9 @@ export const BoardView: React.FC<Props> = ({
   onOpenCheat,
   hasActiveCheat = false,
   dramaticDiceRoll = true,
+  onUseGetOutOfJailCard,
+  onPayBail,
+  bailInfo,
 }) => {
   // Map tile id to grid row and column (1-indexed for CSS Grid)
   const getGridPosition = (id: number): { gridRow: number; gridColumn: number } => {
@@ -157,6 +163,9 @@ export const BoardView: React.FC<Props> = ({
                 hasActiveCheat={hasActiveCheat}
                 playersCount={players.length}
                 dramaticDiceRoll={dramaticDiceRoll}
+                onUseGetOutOfJailCard={onUseGetOutOfJailCard}
+                onPayBail={onPayBail}
+                bailInfo={bailInfo}
               />
             )}
           </div>

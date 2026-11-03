@@ -50,10 +50,10 @@ export const InvestigationRuleCard: React.FC<Props> = ({ settings, onChange }) =
               onChange={() => onChange({ ...settings, jailMode: 'investigation' })}
               className="text-indigo-400"
             />
-            <span className="font-bold text-xs text-indigo-300">🕵️ Bị Công An Điều Tra</span>
+            <span className="font-bold text-xs text-indigo-300">🕵️ Bị Công An Điều Tra (Mặc Định)</span>
           </div>
           <span className="text-[10px] text-slate-300 leading-tight">
-            Bị điều tra vì buôn bán trái phép: Vẫn được di chuyển, bị phạt thu nhập & tăng phí!
+            Không cho phép bảo lãnh. Tạm đình chỉ di chuyển cho đến khi tung số đôi, dùng thẻ ra tù hoặc sau 3 lượt tung thất bại!
           </span>
         </label>
       </div>

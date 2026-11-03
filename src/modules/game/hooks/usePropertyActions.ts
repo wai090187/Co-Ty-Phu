@@ -203,9 +203,15 @@ export const usePropertyActions = (ctx: PropertyOpsContext) => {
 
   const payBail = useCallback(() => {
     if (!ctx.activePlayer || !ctx.activePlayer.inJail) return;
+
+    if (ctx.settings.jailMode === 'investigation') {
+      ctx.addLog('❌ [Bảo Lãnh Thất Bại] Chế độ Bị công an điều tra không cho phép bảo lãnh!', 'jail');
+      return;
+    }
+
     const bailCheck = canPlayerPayBailCheck(ctx.activePlayer, ctx.currentRound, ctx.settings);
     if (!bailCheck.canPay) {
-      alert(bailCheck.reason || 'Chưa thể bảo lãnh / nộp khắc phục!');
+      ctx.addLog(`❌ [Bảo Lãnh Thất Bại] ${ctx.activePlayer.name}: ${bailCheck.reason || 'Chưa thể bảo lãnh!'}`, 'jail');
       return;
     }
 
@@ -224,24 +230,20 @@ export const usePropertyActions = (ctx: PropertyOpsContext) => {
       })
     );
 
-    const isInv = ctx.settings.jailMode === 'investigation';
-    const actionTitle = isInv ? 'Khắc Phục Xóa Án' : 'Bảo Lãnh Tự Do';
-    const actionDesc = isInv
-      ? `🏛️ ${ctx.activePlayer.name} nộp khắc phục ${bailCheck.cost}đ và được xóa án điều tra!`
-      : `🏛️ ${ctx.activePlayer.name} nộp bảo lãnh ${bailCheck.cost}đ và được tự do!`;
-
+    const actionTitle = 'Bảo Lãnh Ra Tù';
     ctx.triggerCashTransfer(ctx.activePlayer.id, [], bailCheck.cost, actionTitle);
     ctx.triggerCharacterEvent(
       ctx.activePlayer.id,
       'cleared_investigation',
       'happy',
       actionTitle,
-      isInv
-        ? `${ctx.activePlayer.name} đã hoàn tất nộp khắc phục, chính thức được xóa án điều tra!`
-        : `${ctx.activePlayer.name} đã nộp bảo lãnh và được trả tự do!`,
+      `${ctx.activePlayer.name} đã nộp bảo lãnh ${bailCheck.cost}đ và được trả tự do!`,
       -bailCheck.cost
     );
-    ctx.addLog(actionDesc, 'jail');
+    ctx.addLog(
+      `🏛️ [Bảo Lãnh Ra Tù Thành Công] ${ctx.activePlayer.name} đã chi trả ${bailCheck.cost}đ tiền bảo lãnh để ra tù thành công!`,
+      'jail'
+    );
   }, [ctx]);
 
   return {

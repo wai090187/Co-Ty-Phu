@@ -278,11 +278,12 @@ export const useMonopolyGame = () => {
     );
 
     const p = state.players.find(x => x.id === targetId);
-    if (p) {
+    if (p && p.getOutOfJailCards > 0 && p.inJail) {
+      const remainingCards = p.getOutOfJailCards - 1;
       const isInv = state.settings.jailMode === 'investigation';
       const msg = isInv
-        ? `🎟️ ${p.name} sử dụng [Thẻ Ra Tù Miễn Phí] để xóa bỏ tình trạng điều tra!`
-        : `🎟️ ${p.name} sử dụng [Thẻ Ra Tù Miễn Phí] để thoát khỏi nhà tù ngay lập tức!`;
+        ? `🕊️ [Dùng Thẻ Ra Tù] ${p.name} đã sử dụng Thẻ Ra Tù Miễn Phí để thoát khỏi diện điều tra thành công! (Không mất tiền, còn lại: ${remainingCards} thẻ)`
+        : `🕊️ [Dùng Thẻ Ra Tù] ${p.name} đã sử dụng Thẻ Ra Tù Miễn Phí để ra tù thành công! (Không mất tiền, còn lại: ${remainingCards} thẻ)`;
       state.addLog(msg, 'jail');
       triggerCharacterEvent(
         p.id,

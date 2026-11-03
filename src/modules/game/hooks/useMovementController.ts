@@ -193,52 +193,89 @@ export const useMovementController = (ctx: MovementContext) => {
       ctx.addLog(`🎲 ${player.name} tung được [${d1}][${d2}] (Tổng: ${total})${isDouble ? ' - LƯỢT ĐÔI!' : ''}`);
 
       if (player.inJail) {
+        const isInvestigation = ctx.settings.jailMode === 'investigation';
+
+        // 1. Thẻ ra tù miễn phí
         if ((player.getOutOfJailCards || 0) > 0) {
           player.getOutOfJailCards = (player.getOutOfJailCards || 0) - 1;
           player.inJail = false;
           player.jailTurns = 0;
           sounds.ability();
+          const remainingCards = player.getOutOfJailCards;
           ctx.addLog(
-            `🕊️ [Thẻ Ra Tù Miễn Phí] ${player.name} tự động sử dụng Thẻ Ra Tù Miễn Phí và được di chuyển ngay!`,
-            'ability'
+            isInvestigation
+              ? `🕊️ [Dùng Thẻ Ra Tù] ${player.name} đã sử dụng Thẻ Ra Tù Miễn Phí để thoát khỏi diện điều tra thành công! (Không mất tiền, còn lại: ${remainingCards} thẻ)`
+              : `🕊️ [Dùng Thẻ Ra Tù] ${player.name} đã sử dụng Thẻ Ra Tù Miễn Phí để ra tù thành công! (Không mất tiền, còn lại: ${remainingCards} thẻ)`,
+            'jail'
           );
           movePlayerSteps(player.id, total);
           return;
         }
 
-        const isInvestigation = ctx.settings.jailMode === 'investigation';
+        // 2. Tung ra số đôi
         if (isDouble) {
           sounds.ability();
           player.inJail = false;
           player.jailTurns = 0;
-          ctx.addLog(`✨ ${player.name} đổ được đôi và được tự do!`, 'jail');
+          ctx.addLog(
+            isInvestigation
+              ? `✨ [Ra Tù Thành Công] ${player.name} tung được số đôi [${d1}][${d2}] - Thoát khỏi diện điều tra thành công miễn phí (không mất tiền)!`
+              : `✨ [Ra Tù Thành Công] ${player.name} tung được số đôi [${d1}][${d2}] - Ra tù thành công miễn phí (không mất tiền)!`,
+            'jail'
+          );
           movePlayerSteps(player.id, total);
           return;
         } else {
+          // 3. Không tung được đôi -> thất bại
           player.jailTurns += 1;
+
+          // Sau 3 lượt tung xúc xắc thất bại:
           if (player.jailTurns >= 3) {
-            const baseFee = getBaseBailFee(ctx.currentRound, ctx.settings);
-            if (player.cash >= baseFee) {
-              player.cash -= baseFee;
+            if (isInvestigation) {
+              // Chế độ công an điều tra: Thả tự do sau 3 lượt tung thất bại (không cho phép bảo lãnh, không mất tiền)
               player.inJail = false;
               player.jailTurns = 0;
-              sounds.cash();
-              ctx.triggerCashTransfer(player.id, [], baseFee, isInvestigation ? 'Phí nộp phạt khắc phục xóa án' : 'Phí bảo lãnh ra tù');
+              sounds.ability();
+              ctx.addLog(
+                `🏛️ [Thả Tự Do Thành Công] ${player.name} sau 3 lượt tung xúc xắc thất bại đã chấp hành đủ thời gian điều tra và chính thức được cơ quan điều tra thả tự do! (Không mất tiền)`,
+                'jail'
+              );
               movePlayerSteps(player.id, total);
               return;
             } else {
-              ctx.handleBankrupt(player);
-              return;
+              // Chế độ tù thường (Prison): Nộp bảo lãnh để ra tù hoặc phá sản
+              const baseFee = getBaseBailFee(ctx.currentRound, ctx.settings);
+              if (player.cash >= baseFee) {
+                player.cash -= baseFee;
+                player.inJail = false;
+                player.jailTurns = 0;
+                sounds.cash();
+                ctx.triggerCashTransfer(player.id, [], baseFee, 'Phí bảo lãnh ra tù sau 3 lượt');
+                ctx.addLog(
+                  `🏛️ [Bảo Lãnh Ra Tù Thành Công] ${player.name} sau 3 lượt ở tù đã chi trả ${baseFee}đ tiền bảo lãnh để ra tù thành công!`,
+                  'jail'
+                );
+                movePlayerSteps(player.id, total);
+                return;
+              } else {
+                ctx.addLog(
+                  `❌ [Ra Tù Thất Bại] ${player.name} sau 3 lượt ở tù không đủ ${baseFee}đ nộp tiền bảo lãnh và bị tuyên bố phá sản!`,
+                  'jail'
+                );
+                ctx.handleBankrupt(player);
+                return;
+              }
             }
           }
 
-          if (isInvestigation) {
-            movePlayerSteps(player.id, total);
-            return;
-          } else {
-            ctx.addLog(`🔒 ${player.name} không tung được đôi (${player.jailTurns}/3)`, 'jail');
-            return;
-          }
+          // Lượt 1 hoặc 2 thất bại (chưa đủ 3 lượt): Người chơi KHÔNG được di chuyển, bị giữ lại!
+          ctx.addLog(
+            isInvestigation
+              ? `🔒 [Ra Tù Thất Bại] ${player.name} tung [${d1}][${d2}] (không phải số đôi) - Thoát điều tra thất bại! (Đã điều tra: ${player.jailTurns}/3 lượt)`
+              : `🔒 [Ra Tù Thất Bại] ${player.name} tung [${d1}][${d2}] (không phải số đôi) - Ra tù thất bại! (Lượt ở tù: ${player.jailTurns}/3)`,
+            'jail'
+          );
+          return;
         }
       }
 

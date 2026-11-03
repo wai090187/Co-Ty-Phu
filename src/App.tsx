@@ -20,6 +20,7 @@ export default function App() {
   const [showSaveLoadModal, setShowSaveLoadModal] = useState(false);
   const [showInventoryPlayerId, setShowInventoryPlayerId] = useState<number | null>(null);
   const [pickingCharacterPlayerIdx, setPickingCharacterPlayerIdx] = useState<number | null>(null);
+  const [quickSaveToast, setQuickSaveToast] = useState<string | null>(null);
 
   const handlePlayerCountChange = (count: number) => {
     if (count < 2 || count > 6) return;
@@ -81,6 +82,10 @@ export default function App() {
     const stateToSave = game.getCurrentSaveState(playerConfigs);
     saveGame.saveQuickSave(stateToSave);
     game.addLog('⚡ Đã lưu nhanh trận đấu thành công (tự động ghi đè)!', 'info');
+    setQuickSaveToast('Đã lưu nhanh game thành công!');
+    setTimeout(() => {
+      setQuickSaveToast(null);
+    }, 2600);
   };
 
   const handleLoadFromSlot = (saveData: any) => {
@@ -100,12 +105,21 @@ export default function App() {
       : 0;
 
   // Global Keyboard Shortcuts
+  // - Tab: Quick Save (saves without confirmation)
   // - Space: Roll dice (when canRoll) or End turn (when finished movement)
   // - Ctrl: Open/close active player's inventory
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA') return;
+
+      // Quick save on Tab
+      if (e.key === 'Tab') {
+        if (!game.isPlaying) return;
+        e.preventDefault();
+        handleQuickSave();
+        return;
+      }
 
       // Toggle inventory on Ctrl
       if (e.key === 'Control') {
@@ -209,6 +223,7 @@ export default function App() {
           }}
           onPayBail={game.payBail}
           canPlayerPayBail={game.canPlayerPayBail}
+          onUseGetOutOfJailCard={game.useGetOutOfJailCard}
           onSelectTile={tile => {
             game.setActivePropertyModalTile(tile);
             game.setIsLandingPropertyAction(false);
@@ -353,6 +368,23 @@ export default function App() {
         onToggleJail={game.cheatToggleJail}
         onTeleportPlayer={game.cheatTeleportPlayer}
       />
+
+      {/* Quick Save Success Toast Notification */}
+      {quickSaveToast && (
+        <aside
+          role="status"
+          aria-live="polite"
+          className="fixed top-14 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-in fade-in slide-in-from-top-3 duration-200"
+        >
+          <div className="px-4 py-2 bg-slate-900/95 text-white font-bold text-xs sm:text-sm rounded-xl shadow-2xl border-2 border-emerald-400 flex items-center gap-2.5 backdrop-blur-md">
+            <span className="text-lg text-emerald-400">⚡</span>
+            <span className="text-emerald-100">{quickSaveToast}</span>
+            <span className="text-[10px] bg-emerald-500/30 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-400/40 font-mono">
+              Tab
+            </span>
+          </div>
+        </aside>
+      )}
     </div>
   );
 }

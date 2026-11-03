@@ -84,15 +84,7 @@ export const useTurnManager = (ctx: TurnManagerContext) => {
       }
 
       const nextP = prev[nextIndex];
-      if (nextP && nextP.inJail && (nextP.getOutOfJailCards || 0) > 0) {
-        nextP.getOutOfJailCards = (nextP.getOutOfJailCards || 0) - 1;
-        nextP.inJail = false;
-        nextP.jailTurns = 0;
-        ctx.addLog(
-          `🕊️ [Thẻ Ra Tù Miễn Phí] ${nextP.name} bắt đầu lượt mới: Thẻ Ra Tù Miễn Phí đã tự động kích hoạt để được tự do!`,
-          'ability'
-        );
-      }
+      // Note: jail exit via card, doubles, or turn limit is handled cleanly during the turn roll or explicit card usage
 
       ctx.setTurnIndex(nextIndex);
       ctx.setCanRoll(true);

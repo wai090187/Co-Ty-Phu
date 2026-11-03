@@ -23,6 +23,9 @@ interface Props {
   hasActiveCheat?: boolean;
   playersCount: number;
   dramaticDiceRoll?: boolean;
+  onUseGetOutOfJailCard?: () => void;
+  onPayBail?: () => void;
+  bailInfo?: { canPay: boolean; cost: number; reason?: string };
 }
 
 export const BoardCenterControls: React.FC<Props> = ({
@@ -41,6 +44,9 @@ export const BoardCenterControls: React.FC<Props> = ({
   hasActiveCheat = false,
   playersCount,
   dramaticDiceRoll = true,
+  onUseGetOutOfJailCard,
+  onPayBail,
+  bailInfo,
 }) => {
   return (
     <div className="absolute inset-0 z-20 pointer-events-none flex flex-col justify-between p-2 sm:p-3.5">
@@ -110,6 +116,39 @@ export const BoardCenterControls: React.FC<Props> = ({
 
         {/* Action Buttons */}
         <div className="w-full flex flex-col gap-1.5 pt-1 border-t border-slate-200/60">
+          {/* In Jail / Under Investigation status banner & quick actions */}
+          {activePlayer.inJail && !activePlayer.bankrupt && (
+            <div className="p-1.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 text-center flex flex-col gap-1">
+              <span className="text-[10.5px] font-bold">
+                {bailInfo?.reason?.includes('điều tra')
+                  ? `🚨 Đang Bị Điều Tra (${activePlayer.jailTurns}/3)`
+                  : `🔒 Đang Ở Tù (${activePlayer.jailTurns}/3)`}
+              </span>
+
+              {/* Free Jail Card button */}
+              {activePlayer.getOutOfJailCards > 0 && !activePlayer.isAI && onUseGetOutOfJailCard && (
+                <button
+                  onClick={onUseGetOutOfJailCard}
+                  className="w-full py-1.5 px-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-xs shadow flex items-center justify-center gap-1 transition-colors"
+                >
+                  <span>🕊️</span>
+                  <span>Dùng Thẻ Ra Tù ({activePlayer.getOutOfJailCards})</span>
+                </button>
+              )}
+
+              {/* Bail button (only available if allowed in prison mode) */}
+              {bailInfo?.canPay && !activePlayer.isAI && onPayBail && (
+                <button
+                  onClick={onPayBail}
+                  className="w-full py-1.5 px-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-xs shadow flex items-center justify-center gap-1 transition-colors"
+                >
+                  <span>🏛️</span>
+                  <span>Bảo Lãnh Ra Tù ({bailInfo.cost}đ)</span>
+                </button>
+              )}
+            </div>
+          )}
+
           <button
             onClick={() => onOpenInventory(activePlayer.id)}
             className="w-full py-1.5 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-colors border border-slate-300/60"

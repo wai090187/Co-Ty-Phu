@@ -12,9 +12,17 @@ export const canPlayerPayBailCheck = (
   settings: GameSettings
 ): { canPay: boolean; cost: number; reason?: string } => {
   if (!player.inJail) return { canPay: false, cost: 0 };
+
+  if (settings.jailMode === 'investigation') {
+    return {
+      canPay: false,
+      cost: 0,
+      reason: 'Chế độ Bị công an điều tra không cho phép bảo lãnh. Cần tung đôi, dùng thẻ ra tù hoặc chấp hành xong 3 lượt điều tra để được thả tự do!',
+    };
+  }
+
   const baseFee = getBaseBailFee(currentRound, settings);
-  const isInv = settings.jailMode === 'investigation';
-  const actionName = isInv ? 'Khắc phục xóa án' : 'Bảo lãnh';
+  const actionName = 'Bảo lãnh';
 
   if (player.jailTurns === 0) {
     if (settings.bailMultiplierTurn1 > 0) {
@@ -28,9 +36,7 @@ export const canPlayerPayBailCheck = (
     return {
       canPay: false,
       cost: 0,
-      reason: isInv
-        ? 'Bạn phải chịu điều tra ít nhất 1 lượt và thử tung xúc xắc đôi trước khi được nộp phạt xóa án!'
-        : 'Bạn phải ở tù ít nhất 1 lượt và thử tung xúc xắc trước khi được bảo lãnh!',
+      reason: 'Bạn phải ở tù ít nhất 1 lượt và thử tung xúc xắc trước khi được bảo lãnh!',
     };
   }
   if (player.jailTurns === 1) {

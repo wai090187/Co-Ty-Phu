@@ -252,6 +252,54 @@ export const RulesTab: React.FC<Props> = ({ settings, onChange }) => {
           Âm Thanh Game
         </label>
       </div>
+
+      {/* LocalStorage Cache Info & Reset */}
+      <div className="p-3 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-base">💾</span>
+          <div>
+            <span className="font-bold text-slate-800 block text-xs">
+              Lưu Cache Tự Động (LocalStorage)
+            </span>
+            <span className="text-[10px] text-slate-500">
+              Mọi thay đổi cài đặt đều được lưu lại và giữ nguyên sau mỗi lần build hoặc tải lại trang.
+            </span>
+          </div>
+        </div>
+
+        <button
+          onClick={() => {
+            const defaults = {
+              startingCash: 2000,
+              goExactBonus: 400,
+              goPassBonus: 200,
+              bailFeeBase: 100,
+              bailFeeRound10: 100,
+              bailFeeRound20: 200,
+              sameColorRentBoostPercent: 20,
+              jailRentPercent: 50,
+              maxConsumableAbilities: 3,
+              soundEnabled: true,
+              moveSpeed: 'normal' as const,
+              jailVisitReward: 100,
+              bailMultiplierTurn1: 0,
+              bailMultiplierTurn2: 2,
+              bailMultiplierTurn3: 1,
+              vacantLandRentPercent: 20,
+              jailMode: 'investigation' as const,
+              investigationIncomePenaltyPercent: 50,
+              investigationFeePenaltyPercent: 50,
+              aiTurnDelay: 2.0,
+              dramaticDiceRoll: true,
+              alwaysShowSidePanels: true,
+            };
+            onChange(defaults);
+          }}
+          className="px-2.5 py-1.5 bg-white hover:bg-slate-200 text-slate-700 font-bold rounded-lg border border-slate-300 text-[11px] shadow-2xs transition-colors shrink-0"
+        >
+          Khôi Phục Mặc Định
+        </button>
+      </div>
     </div>
   );
 };
