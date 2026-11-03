@@ -86,7 +86,7 @@ export const useMonopolyGame = () => {
   });
 
   // Hook 2: Movement controller
-  const { skipMovement, rollDice } = useMovementController({
+  const { skipMovement, rollDice, movePlayerSteps } = useMovementController({
     activePlayer,
     canRoll: state.canRoll,
     isRolling: state.isRolling,
@@ -156,6 +156,11 @@ export const useMonopolyGame = () => {
     tiles: state.tiles,
     chanceDeck: state.chanceDeck,
     chestDeck: state.chestDeck,
+    canRoll: state.canRoll,
+    hasMovedThisTurn: state.hasMovedThisTurn,
+    movePlayerSteps,
+    setUpgradesThisTurn: state.setUpgradesThisTurn,
+    setHasMovedThisTurn: state.setHasMovedThisTurn,
     setPlayers: state.setPlayers,
     setConsumableShop: state.setConsumableShop,
     permanentShop: state.permanentShop,

@@ -7,6 +7,11 @@ interface AbilityContext {
   tiles?: any[];
   chanceDeck: Card[];
   chestDeck: Card[];
+  canRoll?: boolean;
+  hasMovedThisTurn?: boolean;
+  movePlayerSteps?: (playerId: number, stepsRemaining: number) => void;
+  setUpgradesThisTurn?: React.Dispatch<React.SetStateAction<number>>;
+  setHasMovedThisTurn?: (v: boolean) => void;
   setPlayers: React.Dispatch<React.SetStateAction<Player[]>>;
   setConsumableShop: React.Dispatch<React.SetStateAction<ConsumableAbility[]>>;
   permanentShop: PermanentAbility[];
@@ -333,6 +338,10 @@ export const useAbilityShopActions = (ctx: AbilityContext) => {
         'Kích Hoạt Kỹ Năng',
         `${ctx.activePlayer.name} vừa thi triển [${ability.name}]!`
       );
+      let isExtraMovement = false;
+      let moveSteps = 0;
+      let movePlayerId = ctx.activePlayer.id;
+
       ctx.setPlayers(prev => {
         const next = [...prev];
         const p = next.find(x => x.id === ctx.activePlayer!.id);
@@ -353,14 +362,60 @@ export const useAbilityShopActions = (ctx: AbilityContext) => {
         );
 
         switch (ability.effectType) {
-          case 'dice_boost':
-            ctx.setPendingDiceBoost(ability.value || 2);
-            ctx.addLog(`🚀 [${ability.name}]: +${ability.value} bước cho lần tung xúc xắc tới!`, 'ability');
+          case 'dice_boost': {
+            const boostVal = ability.effectValue || ability.value || 1;
+            // Nếu đã tung xúc xắc hoặc đã di chuyển: Coi như một lượt thêm của người chơi
+            if (!ctx.canRoll || ctx.hasMovedThisTurn) {
+              if (p.inJail) {
+                ctx.addLog(
+                  `🚨 [${ability.name}] ${p.name} đang trong diện giam giữ/điều tra nên không thể di chuyển!`,
+                  'jail'
+                );
+                break;
+              }
+              isExtraMovement = true;
+              moveSteps = boostVal;
+              movePlayerId = p.id;
+              if (ctx.setUpgradesThisTurn) ctx.setUpgradesThisTurn(0);
+              if (ctx.setHasMovedThisTurn) ctx.setHasMovedThisTurn(true);
+              ctx.addLog(
+                `🚀 [${ability.name}] ${p.name} kích hoạt lượt di chuyển thêm: Đi tiếp +${boostVal} bước như một lượt mới!`,
+                'ability'
+              );
+            } else {
+              ctx.setPendingDiceBoost(boostVal);
+              ctx.addLog(`🚀 [${ability.name}]: +${boostVal} bước cho lần tung xúc xắc tới!`, 'ability');
+            }
             break;
-          case 'dice_reduce':
-            ctx.setPendingDiceBoost(-(ability.value || 1));
-            ctx.addLog(`🛑 [${ability.name}]: -${ability.value} bước cho lần tung xúc xắc tới!`, 'ability');
+          }
+          case 'dice_reduce': {
+            const reduceVal = ability.effectValue || ability.value || 1;
+            if (!ctx.canRoll || ctx.hasMovedThisTurn) {
+              if (p.inJail) {
+                ctx.addLog(
+                  `🚨 [${ability.name}] ${p.name} đang trong diện giam giữ/điều tra nên không thể di chuyển!`,
+                  'jail'
+                );
+                break;
+              }
+              if (ctx.setUpgradesThisTurn) ctx.setUpgradesThisTurn(0);
+              if (ctx.setHasMovedThisTurn) ctx.setHasMovedThisTurn(true);
+              const newPos = (p.position - reduceVal + 40) % 40;
+              p.position = newPos;
+              sounds.step();
+              ctx.addLog(
+                `🛑 [${ability.name}] ${p.name} hãm phanh lùi lại ${reduceVal} bước về [${ctx.tiles?.[newPos]?.name || newPos}] như một lượt mới!`,
+                'ability'
+              );
+              setTimeout(() => {
+                ctx.resolveTileLanding(p.id, newPos, 0);
+              }, 200);
+            } else {
+              ctx.setPendingDiceBoost(-reduceVal);
+              ctx.addLog(`🛑 [${ability.name}]: -${reduceVal} bước cho lần tung xúc xắc tới!`, 'ability');
+            }
             break;
+          }
           case 'free_tax':
             p.hasFreeTaxNextTurn = true;
             ctx.addLog(`🛡️ [${ability.name}]: Bạn sẽ được miễn thuế lần tới!`, 'ability');
@@ -465,6 +520,26 @@ export const useAbilityShopActions = (ctx: AbilityContext) => {
 
         return next;
       });
+
+      if (isExtraMovement && moveSteps > 0) {
+        sounds.step();
+        if (ctx.movePlayerSteps) {
+          ctx.movePlayerSteps(movePlayerId, moveSteps);
+        } else {
+          ctx.setPlayers(curr =>
+            curr.map(cp => {
+              if (cp.id !== movePlayerId) return cp;
+              const newPos = (cp.position + moveSteps) % 40;
+              return { ...cp, position: newPos };
+            })
+          );
+          setTimeout(() => {
+            const targetP = ctx.activePlayer;
+            const newPos = targetP ? (targetP.position + moveSteps) % 40 : 0;
+            ctx.resolveTileLanding(movePlayerId, newPos, moveSteps);
+          }, 150);
+        }
+      }
 
       ctx.setActiveTargetAbility(null);
     },

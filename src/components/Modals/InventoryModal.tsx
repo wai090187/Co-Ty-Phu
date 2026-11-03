@@ -62,8 +62,7 @@ export const InventoryModal: React.FC<Props> = ({
         if (ownedConsumables.length > 0) {
           const selected = ownedConsumables[selectedIndex];
           if (selected) {
-            const isDiceMod = selected.effectType === 'dice_boost' || selected.effectType === 'dice_reduce';
-            const canUseNow = isCurrentTurn && (!isDiceMod || canUseDiceModifiers);
+            const canUseNow = isCurrentTurn;
             if (canUseNow) {
               onUseAbility(selected);
               onClose();
@@ -176,10 +175,7 @@ export const InventoryModal: React.FC<Props> = ({
             ) : (
               <div className="flex flex-col gap-2">
                 {ownedConsumables.map((ab, idx) => {
-                  const isDiceMod = ab.effectType === 'dice_boost' || ab.effectType === 'dice_reduce';
-                  const canUseNow =
-                    isCurrentTurn &&
-                    (!isDiceMod || canUseDiceModifiers);
+                  const canUseNow = isCurrentTurn;
                   const isSelected = selectedIndex === idx;
 
                   return (
