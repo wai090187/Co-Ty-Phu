@@ -6,10 +6,16 @@ interface Props {
   playersOnTile: Player[];
   edge: 'bottom' | 'left' | 'top' | 'right' | 'corner';
   tileId: number;
+  isInvestigatorHere?: boolean;
 }
 
-export const TilePlayerBadges: React.FC<Props> = ({ playersOnTile, edge, tileId }) => {
-  if (playersOnTile.length === 0) return null;
+export const TilePlayerBadges: React.FC<Props> = ({
+  playersOnTile,
+  edge,
+  tileId,
+  isInvestigatorHere = false,
+}) => {
+  if (playersOnTile.length === 0 && !isInvestigatorHere) return null;
 
   const getAvatarPositionClass = () => {
     switch (edge) {
@@ -34,6 +40,7 @@ export const TilePlayerBadges: React.FC<Props> = ({ playersOnTile, edge, tileId 
     <div
       className={`absolute ${getAvatarPositionClass()} flex items-center justify-center -space-x-2 -space-y-1 pointer-events-none z-40 animate-bounce`}
     >
+      {/* Regular Players */}
       {playersOnTile.map(p => (
         <div
           key={p.id}
@@ -56,6 +63,20 @@ export const TilePlayerBadges: React.FC<Props> = ({ playersOnTile, edge, tileId 
           </span>
         </div>
       ))}
+
+      {/* Special Investigator Detective Badge */}
+      {isInvestigatorHere && (
+        <div
+          key="special-investigator"
+          className="relative rounded-full ring-3 ring-amber-400 shadow-2xl bg-slate-900 shrink-0 w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-sm sm:text-base border-2 border-amber-300"
+          title="🕵️‍♂️ Điều Tra Viên Đặc Biệt"
+        >
+          <span className="drop-shadow-sm select-none">🕵️‍♂️</span>
+          <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full text-[7.5px] font-black text-slate-950 bg-amber-400 border border-white uppercase tracking-tighter shadow-xs">
+            ĐTV
+          </span>
+        </div>
+      )}
     </div>
   );
 };

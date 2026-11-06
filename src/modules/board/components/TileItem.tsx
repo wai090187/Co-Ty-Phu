@@ -12,6 +12,7 @@ export interface TileItemProps {
   isMortgaged?: boolean;
   isCurrentTile?: boolean;
   jailMode?: 'prison' | 'investigation';
+  isInvestigatorHere?: boolean;
   onClick?: () => void;
 }
 
@@ -23,6 +24,7 @@ export const TileItem: React.FC<TileItemProps> = ({
   isMortgaged = false,
   isCurrentTile = false,
   jailMode = 'prison',
+  isInvestigatorHere = false,
   onClick,
 }) => {
   const isCorner = tile.type === 'corner';
@@ -48,7 +50,12 @@ export const TileItem: React.FC<TileItemProps> = ({
         }`}
       >
         <CornerTileContent tile={tile} jailMode={jailMode} />
-        <TilePlayerBadges playersOnTile={playersOnTile} edge={edge} tileId={tile.id} />
+        <TilePlayerBadges
+          playersOnTile={playersOnTile}
+          edge={edge}
+          tileId={tile.id}
+          isInvestigatorHere={isInvestigatorHere}
+        />
       </div>
     );
   }
@@ -188,7 +195,12 @@ export const TileItem: React.FC<TileItemProps> = ({
       )}
 
       {/* Large Avatar sitting OUTSIDE the tile */}
-      <TilePlayerBadges playersOnTile={playersOnTile} edge={edge} tileId={tile.id} />
+      <TilePlayerBadges
+        playersOnTile={playersOnTile}
+        edge={edge}
+        tileId={tile.id}
+        isInvestigatorHere={isInvestigatorHere}
+      />
     </div>
   );
 };

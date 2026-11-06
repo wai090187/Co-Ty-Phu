@@ -200,6 +200,21 @@ export interface GameSettings {
   aiTurnDelay?: number;             // Thời gian chờ giữa 2 lượt/hành động của AI (giây, mặc định 2s)
   dramaticDiceRoll?: boolean;       // Hiệu ứng xúc xắc hồi hộp, kịch tính
   alwaysShowSidePanels?: boolean;   // Luôn hiển thị thông tin người chơi bên trái và log bên phải
+
+  // Special Investigator (Người chơi ẩn: Điều Tra Viên):
+  enableSpecialInvestigator: boolean;       // Kích hoạt Điều Tra Viên
+  investigatorStartRound: number;           // Xuất hiện sau lượt/vòng thứ (mặc định: 2)
+  investigatorAbilityChangeRounds: number;  // Thay đổi ngẫu nhiên năng lực sau mỗi {n} vòng quanh bàn cờ (mặc định: 1)
+}
+
+export interface SpecialInvestigatorState {
+  enabled: boolean;
+  active: boolean;              // Đã xuất hiện trên bàn cờ chưa (currentRound >= startRound)
+  position: number;             // Vị trí ô cờ hiện tại (0..39)
+  lapsCompleted: number;        // Số vòng đã đi qua Trạm Khởi Hành
+  currentAbilityId: string;     // ID năng lực đặc biệt đang kích hoạt
+  usedAbilityIds: string[];     // Các ID năng lực đã dùng (rút không hoàn lại cho đến khi hết)
+  lastDiceRoll?: [number, number];
 }
 
 export interface CashTransferEvent {

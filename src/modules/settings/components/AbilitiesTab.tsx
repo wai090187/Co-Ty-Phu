@@ -22,6 +22,7 @@ interface Props {
   onUpdateConsumable?: (ability: ConsumableAbility) => void;
   onUpdatePermanent?: (ability: PermanentAbility) => void;
   onDeleteAbility?: (abilityId: string, kind: 'consumable' | 'permanent') => void;
+  onResetAbilitiesToDefault?: () => void;
 }
 
 export const AbilitiesTab: React.FC<Props> = ({
@@ -34,10 +35,12 @@ export const AbilitiesTab: React.FC<Props> = ({
   onUpdateConsumable,
   onUpdatePermanent,
   onDeleteAbility,
+  onResetAbilitiesToDefault,
 }) => {
   const [abilityFilter, setAbilityFilter] = useState<'all' | 'consumable' | 'permanent'>('all');
   const [abilitySearch, setAbilitySearch] = useState('');
   const [showAddAbilityForm, setShowAddAbilityForm] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [editingAbility, setEditingAbility] = useState<
     ((ConsumableAbility & { kind: 'consumable' }) | (PermanentAbility & { kind: 'permanent' })) | null
   >(null);
@@ -184,6 +187,61 @@ export const AbilitiesTab: React.FC<Props> = ({
             <span>{showAddAbilityForm ? '✕ Đóng Form' : '+ Thiết Kế Năng Lực'}</span>
           </button>
         </div>
+      </div>
+
+      {/* Database Storage Status Banner & Reset */}
+      <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl">
+        <div className="flex items-center gap-2">
+          <span className="text-base">💾</span>
+          <div>
+            <div className="font-bold text-emerald-950 text-[11.5px] flex items-center gap-1.5">
+              <span>Đồng Bộ Cơ Sở Dữ Liệu Tự Động (Database / LocalStorage)</span>
+              <span className="text-[9.5px] px-1.5 py-0.2 bg-emerald-200/80 text-emerald-900 rounded font-mono font-bold">
+                Đã Lưu
+              </span>
+            </div>
+            <div className="text-[10px] text-emerald-800 mt-0.5">
+              Mọi chỉnh sửa, thêm mới và số lượng kho đều được lưu ngược vào Database, tồn tại vĩnh viễn qua các lần tải lại.
+            </div>
+          </div>
+        </div>
+
+        {onResetAbilitiesToDefault && (
+          <div className="flex items-center gap-1.5">
+            {showResetConfirm ? (
+              <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-red-300 shadow-xs">
+                <span className="text-[10px] text-red-700 font-bold px-1">Xác nhận đặt lại?</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onResetAbilitiesToDefault();
+                    setShowResetConfirm(false);
+                  }}
+                  className="px-2 py-0.5 bg-red-600 text-white font-bold rounded text-[10px] hover:bg-red-700"
+                >
+                  Có, Đặt Lại
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowResetConfirm(false)}
+                  className="px-2 py-0.5 bg-slate-200 text-slate-700 font-bold rounded text-[10px] hover:bg-slate-300"
+                >
+                  Hủy
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowResetConfirm(true)}
+                className="px-2.5 py-1 bg-white hover:bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-lg text-[10.5px] font-bold shadow-2xs transition-colors flex items-center gap-1"
+                title="Khôi phục danh sách kỹ năng về mặc định ban đầu của game"
+              >
+                <span>🔄</span>
+                <span>Khôi Phục Năng Lực Gốc</span>
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Add / Edit Ability Form Modal / Accordion */}

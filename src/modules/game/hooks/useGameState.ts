@@ -11,13 +11,20 @@ import {
   AbilityNotification,
   CashTransferEvent,
   CharacterEvent,
+  SpecialInvestigatorState,
 } from '../../../types/game';
 import { TILES } from '../../board/data/tiles';
-import { INITIAL_CHANCE_CARDS, INITIAL_CHEST_CARDS } from '../../../data/cards';
 import {
-  INITIAL_CONSUMABLE_ABILITIES,
-  INITIAL_PERMANENT_ABILITIES,
-} from '../../../data/abilities';
+  loadConsumablesDb,
+  saveConsumablesDb,
+  loadPermanentsDb,
+  savePermanentsDb,
+  loadChanceDeckDb,
+  saveChanceDeckDb,
+  loadChestDeckDb,
+  saveChestDeckDb,
+  resetAbilitiesDbToDefault,
+} from '../../storage/abilitiesDb';
 
 export interface SetupPlayerConfig {
   name: string;
@@ -50,9 +57,12 @@ export const DEFAULT_SETTINGS: GameSettings = {
   aiTurnDelay: 2.0,
   dramaticDiceRoll: true,
   alwaysShowSidePanels: true,
+  enableSpecialInvestigator: true,
+  investigatorStartRound: 2,
+  investigatorAbilityChangeRounds: 1,
 };
 
-const SETTINGS_STORAGE_KEY = 'co_ty_phu_settings_cache_v2';
+const SETTINGS_STORAGE_KEY = 'co_ty_phu_settings_cache_v3';
 
 const loadCachedSettings = (): GameSettings => {
   try {
@@ -90,14 +100,69 @@ export const useGameState = () => {
   const [upgradesThisTurn, setUpgradesThisTurn] = useState(0);
 
   const [tiles, setTiles] = useState<Tile[]>(TILES);
-  const [chanceDeck, setChanceDeck] = useState<Card[]>(INITIAL_CHANCE_CARDS);
-  const [chestDeck, setChestDeck] = useState<Card[]>(INITIAL_CHEST_CARDS);
-  const [consumableShop, setConsumableShop] = useState<ConsumableAbility[]>(
-    INITIAL_CONSUMABLE_ABILITIES
+
+  // Persistent Database-backed Decks & Ability Shops
+  const [chanceDeck, setChanceDeckInternal] = useState<Card[]>(loadChanceDeckDb);
+  const setChanceDeck = useCallback((newCards: Card[] | ((prev: Card[]) => Card[])) => {
+    setChanceDeckInternal(prev => {
+      const next = typeof newCards === 'function' ? newCards(prev) : newCards;
+      saveChanceDeckDb(next);
+      return next;
+    });
+  }, []);
+
+  const [chestDeck, setChestDeckInternal] = useState<Card[]>(loadChestDeckDb);
+  const setChestDeck = useCallback((newCards: Card[] | ((prev: Card[]) => Card[])) => {
+    setChestDeckInternal(prev => {
+      const next = typeof newCards === 'function' ? newCards(prev) : newCards;
+      saveChestDeckDb(next);
+      return next;
+    });
+  }, []);
+
+  const [consumableShop, setConsumableShopInternal] = useState<ConsumableAbility[]>(loadConsumablesDb);
+  const setConsumableShop = useCallback(
+    (newAbilities: ConsumableAbility[] | ((prev: ConsumableAbility[]) => ConsumableAbility[])) => {
+      setConsumableShopInternal(prev => {
+        const next = typeof newAbilities === 'function' ? newAbilities(prev) : newAbilities;
+        saveConsumablesDb(next);
+        return next;
+      });
+    },
+    []
   );
-  const [permanentShop, setPermanentShop] = useState<PermanentAbility[]>(
-    INITIAL_PERMANENT_ABILITIES
+
+  const [permanentShop, setPermanentShopInternal] = useState<PermanentAbility[]>(loadPermanentsDb);
+  const setPermanentShop = useCallback(
+    (newAbilities: PermanentAbility[] | ((prev: PermanentAbility[]) => PermanentAbility[])) => {
+      setPermanentShopInternal(prev => {
+        const next = typeof newAbilities === 'function' ? newAbilities(prev) : newAbilities;
+        savePermanentsDb(next);
+        return next;
+      });
+    },
+    []
   );
+
+  const resetAbilitiesToDefault = useCallback(() => {
+    const def = resetAbilitiesDbToDefault();
+    setConsumableShopInternal(def.consumables);
+    setPermanentShopInternal(def.permanents);
+    setChanceDeckInternal(def.chance);
+    setChestDeckInternal(def.chest);
+  }, []);
+
+  // Special Investigator State (Người chơi ẩn: Điều Tra Viên)
+  const [investigator, setInvestigator] = useState<SpecialInvestigatorState>({
+    enabled: true,
+    active: false,
+    position: 0,
+    lapsCompleted: 0,
+    currentAbilityId: 'inv_compensate_neighbor',
+    usedAbilityIds: ['inv_compensate_neighbor'],
+  });
+  const [isInvestigatorMoving, setIsInvestigatorMoving] = useState(false);
+  const [isInvestigatorTurn, setIsInvestigatorTurn] = useState(false);
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [dice, setDice] = useState<[number, number]>([1, 1]);
@@ -235,5 +300,12 @@ export const useGameState = () => {
     logs,
     setLogs,
     addLog,
+    investigator,
+    setInvestigator,
+    isInvestigatorMoving,
+    setIsInvestigatorMoving,
+    isInvestigatorTurn,
+    setIsInvestigatorTurn,
+    resetAbilitiesToDefault,
   };
 };

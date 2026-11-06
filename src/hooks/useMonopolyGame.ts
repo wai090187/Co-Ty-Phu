@@ -15,6 +15,7 @@ import { usePropertyActions } from '../modules/game/hooks/usePropertyActions';
 import { useAbilityShopActions } from '../modules/game/hooks/useAbilityShopActions';
 import { useCardActions } from '../modules/game/hooks/useCardActions';
 import { useAIBotTurn } from '../modules/game/hooks/useAIBotTurn';
+import { useInvestigatorTurn } from '../modules/game/hooks/useInvestigatorTurn';
 import { applyLoadedGameState, extractCurrentSaveState } from '../modules/game/utils/saveStateHelper';
 
 export type { SetupPlayerConfig };
@@ -195,6 +196,9 @@ export const useMonopolyGame = () => {
     currentRound: state.currentRound,
     startingCash: state.settings.startingCash,
     activePlayer,
+    settings: state.settings,
+    setInvestigator: state.setInvestigator,
+    setIsInvestigatorTurn: state.setIsInvestigatorTurn,
     setPlayers: state.setPlayers,
     setCurrentRound: state.setCurrentRound,
     setTurnIndex: state.setTurnIndex,
@@ -241,6 +245,31 @@ export const useMonopolyGame = () => {
     setAiActionModalInfo: state.setAiActionModalInfo,
     useConsumableAbility,
     endTurn,
+  });
+
+  // Hook 7: Special Investigator Autonomous Loop
+  useInvestigatorTurn({
+    settings: state.settings,
+    currentRound: state.currentRound,
+    tiles: state.tiles,
+    players: state.players,
+    chanceDeck: state.chanceDeck,
+    chestDeck: state.chestDeck,
+    investigator: state.investigator,
+    setInvestigator: state.setInvestigator,
+    isInvestigatorTurn: state.isInvestigatorTurn,
+    setIsInvestigatorTurn: state.setIsInvestigatorTurn,
+    isInvestigatorMoving: state.isInvestigatorMoving,
+    setIsInvestigatorMoving: state.setIsInvestigatorMoving,
+    setPlayers: state.setPlayers,
+    addLog: state.addLog,
+    triggerCashTransfer,
+    setAiActionModalInfo: state.setAiActionModalInfo,
+    setDice: state.setDice,
+    onInvestigatorTurnComplete: () => {
+      state.setCanRoll(true);
+      state.setHasMovedThisTurn(false);
+    },
   });
 
   const updateCardQuantity = (cardId: string, quantity: number) => {

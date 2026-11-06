@@ -25,6 +25,7 @@ export interface SettingsModalProps {
   onUpdateConsumable?: (ability: ConsumableAbility) => void;
   onUpdatePermanent?: (ability: PermanentAbility) => void;
   onDeleteAbility?: (abilityId: string, kind: 'consumable' | 'permanent') => void;
+  onResetAbilitiesToDefault?: () => void;
   onClose: () => void;
 }
 
@@ -44,6 +45,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onUpdateConsumable,
   onUpdatePermanent,
   onDeleteAbility,
+  onResetAbilitiesToDefault,
   onClose,
 }) => {
   const [activeTab, setActiveTab] = useState<'rules' | 'card_creator' | 'ability_creator'>('rules');
@@ -153,6 +155,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             onUpdateConsumable={onUpdateConsumable}
             onUpdatePermanent={onUpdatePermanent}
             onDeleteAbility={onDeleteAbility}
+            onResetAbilitiesToDefault={onResetAbilitiesToDefault}
           />
         )}
 

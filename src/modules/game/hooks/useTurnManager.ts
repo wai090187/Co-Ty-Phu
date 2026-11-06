@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Player } from '../../../types/game';
+import { Player, GameSettings, SpecialInvestigatorState } from '../../../types/game';
 import { SetupPlayerConfig } from './useGameState';
 import { DEFAULT_PLAYER_COLORS } from '../constants/defaultSetup';
 
@@ -8,6 +8,9 @@ interface TurnManagerContext {
   currentRound: number;
   startingCash: number;
   activePlayer: Player | null;
+  settings?: GameSettings;
+  setInvestigator?: React.Dispatch<React.SetStateAction<SpecialInvestigatorState>>;
+  setIsInvestigatorTurn?: (v: boolean) => void;
   setPlayers: React.Dispatch<React.SetStateAction<Player[]>>;
   setCurrentRound: React.Dispatch<React.SetStateAction<number>>;
   setTurnIndex: React.Dispatch<React.SetStateAction<number>>;
@@ -55,6 +58,19 @@ export const useTurnManager = (ctx: TurnManagerContext) => {
       ctx.setUpgradesThisTurn(0);
       ctx.setWinner(null);
       ctx.setIsPlaying(true);
+      if (ctx.setInvestigator) {
+        ctx.setInvestigator({
+          enabled: true,
+          active: false,
+          position: 0,
+          lapsCompleted: 0,
+          currentAbilityId: 'inv_compensate_neighbor',
+          usedAbilityIds: ['inv_compensate_neighbor'],
+        });
+      }
+      if (ctx.setIsInvestigatorTurn) {
+        ctx.setIsInvestigatorTurn(false);
+      }
       ctx.setLogs([
         {
           id: 'init-1',
@@ -78,16 +94,38 @@ export const useTurnManager = (ctx: TurnManagerContext) => {
         nextIndex = (nextIndex + 1) % prev.length;
         loopCount++;
       }
+
+      let isInvTurnTriggered = false;
       if (nextIndex <= ctx.turnIndex) {
-        ctx.setCurrentRound(r => r + 1);
-        ctx.addLog(`--- Bắt đầu Vòng ${ctx.currentRound + 1} ---`, 'info');
+        const nextRound = ctx.currentRound + 1;
+        ctx.setCurrentRound(nextRound);
+        ctx.addLog(`--- Bắt đầu Vòng ${nextRound} ---`, 'info');
+
+        const isInvEnabled = ctx.settings?.enableSpecialInvestigator ?? true;
+        const startRound = ctx.settings?.investigatorStartRound ?? 2;
+
+        if (isInvEnabled && nextRound >= startRound) {
+          if (ctx.setInvestigator) {
+            ctx.setInvestigator(prevInv => {
+              if (!prevInv.active) {
+                ctx.addLog(
+                  `🕵️‍♂️ [ĐIỀU TRA VIÊN XUẤT HIỆN] Vòng ${nextRound}: Điều Tra Viên đặc biệt chính thức vào cuộc và bắt đầu tuần tra bàn cờ!`,
+                  'jail'
+                );
+                return { ...prevInv, active: true, position: 0 };
+              }
+              return prevInv;
+            });
+          }
+          if (ctx.setIsInvestigatorTurn) {
+            ctx.setIsInvestigatorTurn(true);
+            isInvTurnTriggered = true;
+          }
+        }
       }
 
-      const nextP = prev[nextIndex];
-      // Note: jail exit via card, doubles, or turn limit is handled cleanly during the turn roll or explicit card usage
-
       ctx.setTurnIndex(nextIndex);
-      ctx.setCanRoll(true);
+      ctx.setCanRoll(!isInvTurnTriggered);
       ctx.setHasMovedThisTurn(false);
       ctx.setUpgradesThisTurn(0);
       ctx.setConsecutiveDoubles(0);

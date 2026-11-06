@@ -61,6 +61,7 @@ export const GameModalsContainer: React.FC<GameModalsProps> = ({
   onUpdateConsumable,
   onUpdatePermanent,
   onDeleteAbility,
+  onResetAbilitiesToDefault,
   onCloseSettings,
   pickingCharacterPlayerIdx,
   selectedCharacterId,
@@ -178,6 +179,7 @@ export const GameModalsContainer: React.FC<GameModalsProps> = ({
           onUpdateConsumable={onUpdateConsumable}
           onUpdatePermanent={onUpdatePermanent}
           onDeleteAbility={onDeleteAbility}
+          onResetAbilitiesToDefault={onResetAbilitiesToDefault}
           onClose={onCloseSettings}
         />
       )}

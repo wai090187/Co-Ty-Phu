@@ -2,6 +2,7 @@ import React from 'react';
 import { GameSettings } from '../../../types/game';
 import { InvestigationRuleCard } from './InvestigationRuleCard';
 import { DisplaySettingsCard } from './DisplaySettingsCard';
+import { InvestigatorSettingsCard } from './InvestigatorSettingsCard';
 
 interface Props {
   settings: GameSettings;
@@ -224,6 +225,9 @@ export const RulesTab: React.FC<Props> = ({ settings, onChange }) => {
       {/* Special Investigation Law Setting */}
       <InvestigationRuleCard settings={settings} onChange={onChange} />
 
+      {/* Special Investigator Autonomous Hidden Player */}
+      <InvestigatorSettingsCard settings={settings} onChange={onChange} />
+
       {/* Display, AI Delay & Layout Settings */}
       <DisplaySettingsCard settings={settings} onChange={onChange} />
 
@@ -292,6 +296,9 @@ export const RulesTab: React.FC<Props> = ({ settings, onChange }) => {
               aiTurnDelay: 2.0,
               dramaticDiceRoll: true,
               alwaysShowSidePanels: true,
+              enableSpecialInvestigator: true,
+              investigatorStartRound: 2,
+              investigatorAbilityChangeRounds: 1,
             };
             onChange(defaults);
           }}

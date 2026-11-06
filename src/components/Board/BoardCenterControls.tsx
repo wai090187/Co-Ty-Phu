@@ -4,8 +4,9 @@
  */
 
 import React from 'react';
-import { Player } from '../../types/game';
+import { Player, SpecialInvestigatorState } from '../../types/game';
 import { DiceRoller } from '../Controls/DiceRoller';
+import { ALL_INVESTIGATOR_ABILITIES } from '../../data/investigatorAbilities';
 
 interface Props {
   activePlayer: Player;
@@ -26,6 +27,7 @@ interface Props {
   onUseGetOutOfJailCard?: () => void;
   onPayBail?: () => void;
   bailInfo?: { canPay: boolean; cost: number; reason?: string };
+  investigator?: SpecialInvestigatorState;
 }
 
 export const BoardCenterControls: React.FC<Props> = ({
@@ -47,14 +49,19 @@ export const BoardCenterControls: React.FC<Props> = ({
   onUseGetOutOfJailCard,
   onPayBail,
   bailInfo,
+  investigator,
 }) => {
+  const currentInvestigatorAbility = investigator?.currentAbilityId
+    ? ALL_INVESTIGATOR_ABILITIES.find(a => a.id === investigator.currentAbilityId)
+    : null;
+
   return (
     <div className="absolute inset-0 z-20 pointer-events-none flex flex-col justify-between p-2 sm:p-3.5">
-      {/* Top Corner Utility Buttons */}
-      <div className="flex items-center justify-between w-full pointer-events-auto">
+      {/* Top Corner Utility Buttons & Investigator Status */}
+      <div className="flex items-center justify-between w-full pointer-events-auto gap-1.5">
         <button
           onClick={onTogglePlayersDrawer}
-          className="px-2.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-900 text-white font-bold text-[11px] sm:text-xs flex items-center gap-1.5 shadow-md border border-amber-500/40 transition-all hover:scale-105 active:scale-95"
+          className="px-2.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-900 text-white font-bold text-[11px] sm:text-xs flex items-center gap-1.5 shadow-md border border-amber-500/40 transition-all hover:scale-105 active:scale-95 shrink-0"
           title="Mở danh sách người chơi"
         >
           <span>👥</span>
@@ -62,9 +69,26 @@ export const BoardCenterControls: React.FC<Props> = ({
           <span className="hidden sm:inline">Người Chơi</span>
         </button>
 
+        {/* Investigator Status Chip */}
+        {investigator?.active && (
+          <div
+            className="px-2 sm:px-2.5 py-1 rounded-xl bg-slate-900/95 text-amber-300 font-bold text-[10px] sm:text-[11px] flex items-center gap-1.5 shadow-lg border-2 border-amber-400/60 max-w-[50%] truncate animate-in fade-in"
+            title={`Điều Tra Viên Đặc Biệt đang tuần tra (Vòng ${investigator.lapsCompleted}). Năng lực: ${currentInvestigatorAbility?.name || ''} - ${currentInvestigatorAbility?.description || ''}`}
+          >
+            <span className="text-sm">🕵️‍♂️</span>
+            <span className="text-amber-200 hidden md:inline shrink-0">ĐTV:</span>
+            <span className="text-white truncate">
+              {currentInvestigatorAbility?.shortDesc || currentInvestigatorAbility?.name || 'Tuần Tra'}
+            </span>
+            <span className="text-[9px] bg-amber-400/20 text-amber-300 px-1 py-0.2 rounded font-mono shrink-0 border border-amber-400/30">
+              V{investigator.lapsCompleted}
+            </span>
+          </div>
+        )}
+
         <button
           onClick={onToggleLogDrawer}
-          className="px-2.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-900 text-white font-bold text-[11px] sm:text-xs flex items-center gap-1.5 shadow-md border border-amber-500/40 transition-all hover:scale-105 active:scale-95"
+          className="px-2.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-900 text-white font-bold text-[11px] sm:text-xs flex items-center gap-1.5 shadow-md border border-amber-500/40 transition-all hover:scale-105 active:scale-95 shrink-0"
           title="Mở nhật ký trận đấu"
         >
           <span>📜</span>

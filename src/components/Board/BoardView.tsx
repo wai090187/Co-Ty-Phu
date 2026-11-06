@@ -1,5 +1,4 @@
-import React from 'react';
-import { Tile, Player } from '../../types/game';
+import { Tile, Player, SpecialInvestigatorState } from '../../types/game';
 import { TileItem } from './TileItem';
 import { BoardCenterControls } from './BoardCenterControls';
 
@@ -24,6 +23,7 @@ interface Props {
   onUseGetOutOfJailCard?: () => void;
   onPayBail?: () => void;
   bailInfo?: { canPay: boolean; cost: number; reason?: string };
+  investigator?: SpecialInvestigatorState;
 }
 
 export const BoardView: React.FC<Props> = ({
@@ -47,6 +47,7 @@ export const BoardView: React.FC<Props> = ({
   onUseGetOutOfJailCard,
   onPayBail,
   bailInfo,
+  investigator,
 }) => {
   // Map tile id to grid row and column (1-indexed for CSS Grid)
   const getGridPosition = (id: number): { gridRow: number; gridColumn: number } => {
@@ -81,6 +82,7 @@ export const BoardView: React.FC<Props> = ({
             const housesCount = owner?.houses[tile.id] || 0;
             const isMortgaged = owner?.mortgaged[tile.id] || false;
             const isCurrent = activePlayer.position === tile.id;
+            const isInvestigatorHere = Boolean(investigator?.active && investigator.position === tile.id);
 
             return (
               <div
@@ -98,6 +100,7 @@ export const BoardView: React.FC<Props> = ({
                   housesCount={housesCount}
                   isMortgaged={isMortgaged}
                   isCurrentTile={isCurrent}
+                  isInvestigatorHere={isInvestigatorHere}
                   onClick={() => onSelectTile(tile)}
                 />
               </div>
@@ -166,6 +169,7 @@ export const BoardView: React.FC<Props> = ({
                 onUseGetOutOfJailCard={onUseGetOutOfJailCard}
                 onPayBail={onPayBail}
                 bailInfo={bailInfo}
+                investigator={investigator}
               />
             )}
           </div>

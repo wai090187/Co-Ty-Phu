@@ -235,6 +235,7 @@ export default function App() {
           hasActiveCheat={
             !!(game.cheatNextDice || game.cheatNextChanceCardId || game.cheatNextChestCardId)
           }
+          investigator={game.investigator}
         />
       )}
 
@@ -299,6 +300,7 @@ export default function App() {
             game.setPermanentShop(prev => prev.filter(item => item.id !== id));
           }
         }}
+        onResetAbilitiesToDefault={game.resetAbilitiesToDefault}
         onCloseSettings={() => setShowSettings(false)}
         pickingCharacterPlayerIdx={pickingCharacterPlayerIdx}
         selectedCharacterId={
