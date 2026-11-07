@@ -126,6 +126,7 @@ export const BoardCenterControls: React.FC<Props> = ({
           disabled={!canRoll || isMovingStepByStep || activePlayer?.isAI || activePlayer?.bankrupt}
           isRolling={isRolling}
           dramaticRoll={dramaticDiceRoll}
+          isExtraRoll={dice[0] === dice[1] && dice[0] > 0 && canRoll}
         />
 
         {/* Fast Forward button */}

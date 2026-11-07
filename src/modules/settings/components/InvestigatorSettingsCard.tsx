@@ -109,7 +109,7 @@ export const InvestigatorSettingsCard: React.FC<Props> = ({ settings, onChange }
             </div>
           </div>
 
-          {/* Collapsible 10 Abilities List */}
+          {/* Collapsible Abilities List */}
           <div className="p-2.5 bg-indigo-50/50 border border-indigo-100 rounded-lg">
             <button
               type="button"
@@ -118,7 +118,7 @@ export const InvestigatorSettingsCard: React.FC<Props> = ({ settings, onChange }
             >
               <span className="flex items-center gap-1.5">
                 <span>📜</span>
-                <span>Xem 10 Năng Lực Đặc Biệt (Rút ngẫu nhiên không lặp lại)</span>
+                <span>Xem {ALL_INVESTIGATOR_ABILITIES.length} Năng Lực Đặc Biệt (Rút ngẫu nhiên không lặp lại)</span>
               </span>
               <span className="text-[11px] text-indigo-600 bg-white px-2 py-0.5 rounded border border-indigo-200">
                 {showAbilitiesList ? 'Thu gọn ▲' : 'Xem chi tiết ▼'}

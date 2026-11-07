@@ -92,6 +92,30 @@ export const ALL_INVESTIGATOR_ABILITIES: InvestigatorAbility[] = [
     description:
       'Sau khi di chuyển, nếu trúng ô Cơ Hội hoặc Khí Vận thì lần lượt tất cả người chơi trên bàn cờ đều phải bốc 1 lá bài Cơ Hội / Khí Vận tương ứng.',
   },
+  {
+    id: 'inv_allow_house_upgrade',
+    name: 'Cấp Phép Quy Hoạch: Nâng Cấp Nhà Tự Do',
+    icon: 'home',
+    shortDesc: 'Đứng cùng ô người chơi: Cho phép nâng cấp 1 nhà bất kỳ (trả tiền đủ)',
+    description:
+      'Sau khi di chuyển, nếu đứng cùng ô với người chơi, Điều Tra Viên cấp giấy phép đặc biệt cho phép họ nâng cấp 1 căn nhà bất kỳ trên các lô đất sở hữu (người chơi vẫn phải trả tiền xây theo giá gốc).',
+  },
+  {
+    id: 'inv_redistribute_land_poorest',
+    name: 'Tái Điều Tiết Đất Đai (Chống Độc Quyền)',
+    icon: 'scale',
+    shortDesc: 'Đứng cùng ô người nhiều/ít đất: Cho người ít đất mua lô đất rẻ nhất của người nhiều đất',
+    description:
+      'Sau khi di chuyển, nếu đứng cùng ô với người chơi có nhiều đất nhất hoặc ít đất nhất, cho phép người chơi ít đất mua lại lô đất có giá gốc thấp nhất của người nhiều đất (sau khi mua thì toàn bộ nhà bị phá dỡ về đất trống).',
+  },
+  {
+    id: 'inv_buy_vacant_or_double_sell',
+    name: 'Đặc Quyền Giao Dịch: Mua Đất Trống Hoặc Bán Giá Gấp Đôi',
+    icon: 'trending-up',
+    shortDesc: 'Đứng cùng ô người chơi: Cho phép mua đất trống bất kỳ hoặc bán đất giá x2',
+    description:
+      'Sau khi di chuyển, nếu đứng cùng ô với người chơi, cho phép họ được mua 1 lô đất còn trống bất kỳ trên bàn cờ (trả đủ tiền) hoặc bán lại 1 lô đất đang sở hữu cho ngân hàng với giá gấp đôi (tổng tiền đất + nhà x2).',
+  },
 ];
 
 /**

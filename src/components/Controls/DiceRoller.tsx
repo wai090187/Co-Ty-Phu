@@ -12,6 +12,7 @@ interface Props {
   disabled?: boolean;
   isRolling?: boolean;
   dramaticRoll?: boolean;
+  isExtraRoll?: boolean;
 }
 
 export const DiceRoller: React.FC<Props> = ({
@@ -20,6 +21,7 @@ export const DiceRoller: React.FC<Props> = ({
   disabled = false,
   isRolling = false,
   dramaticRoll = true,
+  isExtraRoll = false,
 }) => {
   const [animating, setAnimating] = useState(false);
   const [displayDice, setDisplayDice] = useState<[number, number]>(dice);
@@ -151,7 +153,13 @@ export const DiceRoller: React.FC<Props> = ({
             : 'bg-gradient-to-r from-red-600 to-rose-700 text-white hover:from-red-500 hover:to-rose-600 hover:shadow-red-500/30'
         }`}
       >
-        <span>{animating || isRolling ? 'Đang Lắc Xúc Xắc...' : 'Tung Xúc Xắc'}</span>
+        <span>
+          {animating || isRolling
+            ? 'Đang Lắc Xúc Xắc...'
+            : isExtraRoll
+            ? '🎲 Tung Tiếp (Đôi)'
+            : 'Tung Xúc Xắc'}
+        </span>
         {!disabled && !isRolling && !animating && (
           <kbd className="px-1.5 py-0.5 text-[9.5px] bg-white/25 text-white rounded border border-white/40 font-mono shadow-xs">
             Space

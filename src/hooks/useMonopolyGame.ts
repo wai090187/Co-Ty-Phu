@@ -64,8 +64,8 @@ export const useMonopolyGame = () => {
     setChestDeck: state.setChestDeck,
     permanentShop: state.permanentShop,
     consumableShop: state.consumableShop,
-    pendingDestroyHouseNext: state.pendingDestroyHouseNext,
-    setPendingDestroyHouseNext: state.setPendingDestroyHouseNext,
+    pendingDestroyHousePlayerId: state.pendingDestroyHousePlayerId,
+    setPendingDestroyHousePlayerId: state.setPendingDestroyHousePlayerId,
     setHasMovedThisTurn: state.setHasMovedThisTurn,
     setPlayers: state.setPlayers,
     addLog: state.addLog,
@@ -106,6 +106,7 @@ export const useMonopolyGame = () => {
     setCanRoll: state.setCanRoll,
     setPendingDiceBoost: state.setPendingDiceBoost,
     setConsecutiveDoubles: state.setConsecutiveDoubles,
+    setHasPendingExtraRoll: state.setHasPendingExtraRoll,
     setIsMovingStepByStep: state.setIsMovingStepByStep,
     setPlayers: state.setPlayers,
     addLog: state.addLog,
@@ -172,7 +173,7 @@ export const useMonopolyGame = () => {
     setActiveUtilityModal: state.setActiveUtilityModal,
     setActiveTargetAbility: state.setActiveTargetAbility,
     setPendingDiceBoost: state.setPendingDiceBoost,
-    setPendingDestroyHouseNext: state.setPendingDestroyHouseNext,
+    setPendingDestroyHousePlayerId: state.setPendingDestroyHousePlayerId,
     addLog: state.addLog,
     triggerCashTransfer,
     triggerCharacterEvent,
@@ -210,6 +211,7 @@ export const useMonopolyGame = () => {
     setLogs: state.setLogs,
     addLog: state.addLog,
     setConsecutiveDoubles: state.setConsecutiveDoubles,
+    setHasPendingExtraRoll: state.setHasPendingExtraRoll,
     closeAllModals,
   });
 
@@ -271,6 +273,51 @@ export const useMonopolyGame = () => {
       state.setHasMovedThisTurn(false);
     },
   });
+
+  // Hook 8: Double roll extra turn auto-grant effect
+  useEffect(() => {
+    if (
+      state.hasPendingExtraRoll &&
+      !state.isRolling &&
+      !state.isMovingStepByStep &&
+      !state.activePropertyModalTile &&
+      !state.activeStationModal &&
+      !state.activeUtilityModal &&
+      !state.activeDrawnCard &&
+      !state.activeAbilityNotification &&
+      !state.aiActionModalInfo &&
+      !state.isInvestigatorTurn &&
+      !state.isInvestigatorMoving &&
+      activePlayer &&
+      !activePlayer.inJail &&
+      !activePlayer.bankrupt
+    ) {
+      const timer = setTimeout(() => {
+        state.setHasPendingExtraRoll(false);
+        state.setCanRoll(true);
+        state.setHasMovedThisTurn(false);
+        state.addLog(
+          `🎲✨ [Lượt Tung Tiếp] ${activePlayer.name} vừa tung được xúc xắc đôi, được tiếp tục tung xúc xắc!`,
+          'ability'
+        );
+      }, 350);
+      return () => clearTimeout(timer);
+    }
+  }, [
+    state.hasPendingExtraRoll,
+    state.isRolling,
+    state.isMovingStepByStep,
+    state.activePropertyModalTile,
+    state.activeStationModal,
+    state.activeUtilityModal,
+    state.activeDrawnCard,
+    state.activeAbilityNotification,
+    state.aiActionModalInfo,
+    state.isInvestigatorTurn,
+    state.isInvestigatorMoving,
+    activePlayer,
+    state,
+  ]);
 
   const updateCardQuantity = (cardId: string, quantity: number) => {
     state.setChanceDeck(prev => prev.map(c => (c.id === cardId ? { ...c, quantity } : c)));

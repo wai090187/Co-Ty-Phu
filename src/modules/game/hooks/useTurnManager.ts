@@ -22,6 +22,7 @@ interface TurnManagerContext {
   setLogs: (logs: any) => void;
   addLog: (text: string, type?: any) => void;
   setConsecutiveDoubles: (val: number) => void;
+  setHasPendingExtraRoll?: (val: boolean) => void;
   closeAllModals: () => void;
 }
 
@@ -129,6 +130,7 @@ export const useTurnManager = (ctx: TurnManagerContext) => {
       ctx.setHasMovedThisTurn(false);
       ctx.setUpgradesThisTurn(0);
       ctx.setConsecutiveDoubles(0);
+      ctx.setHasPendingExtraRoll?.(false);
       return [...prev];
     });
   }, [ctx]);

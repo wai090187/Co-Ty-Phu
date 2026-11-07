@@ -196,7 +196,8 @@ export const useGameState = () => {
   const [winner, setWinner] = useState<Player | null>(null);
 
   const [pendingDiceBoost, setPendingDiceBoost] = useState<number>(0);
-  const [pendingDestroyHouseNext, setPendingDestroyHouseNext] = useState<boolean>(false);
+  const [pendingDestroyHousePlayerId, setPendingDestroyHousePlayerId] = useState<number | null>(null);
+  const [hasPendingExtraRoll, setHasPendingExtraRoll] = useState<boolean>(false);
 
   // Cheat Mode State
   const [isCheatModalOpen, setIsCheatModalOpen] = useState<boolean>(false);
@@ -285,8 +286,10 @@ export const useGameState = () => {
     setWinner,
     pendingDiceBoost,
     setPendingDiceBoost,
-    pendingDestroyHouseNext,
-    setPendingDestroyHouseNext,
+    pendingDestroyHousePlayerId,
+    setPendingDestroyHousePlayerId,
+    hasPendingExtraRoll,
+    setHasPendingExtraRoll,
     isCheatModalOpen,
     setIsCheatModalOpen,
     cheatSelectedPlayerId,

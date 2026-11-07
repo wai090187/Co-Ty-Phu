@@ -22,6 +22,7 @@ interface MovementContext {
   setCanRoll: (v: boolean) => void;
   setPendingDiceBoost: (v: number) => void;
   setConsecutiveDoubles: (v: number) => void;
+  setHasPendingExtraRoll?: (v: boolean) => void;
   setIsMovingStepByStep: (v: boolean) => void;
   setPlayers: React.Dispatch<React.SetStateAction<Player[]>>;
   addLog: (msg: string, type?: any) => void;
@@ -284,6 +285,7 @@ export const useMovementController = (ctx: MovementContext) => {
         ctx.setConsecutiveDoubles(nextDoubles);
         if (nextDoubles >= 3) {
           ctx.setConsecutiveDoubles(0);
+          ctx.setHasPendingExtraRoll?.(false);
           if ((player.getOutOfJailCards || 0) > 0) {
             player.getOutOfJailCards = (player.getOutOfJailCards || 0) - 1;
             player.position = 10;
@@ -317,9 +319,16 @@ export const useMovementController = (ctx: MovementContext) => {
               : `${player.name} tung đôi 3 lần liên tiếp: Bị bắt vào tù!`
           );
           return;
+        } else {
+          ctx.setHasPendingExtraRoll?.(true);
+          ctx.addLog(
+            `🎲✨ [Xúc Xắc Đôi] ${player.name} tung được cặp số đôi [${d1}][${d2}], được quyền tung tiếp thêm 1 lượt sau khi hoàn tất di chuyển!`,
+            'ability'
+          );
         }
       } else {
         ctx.setConsecutiveDoubles(0);
+        ctx.setHasPendingExtraRoll?.(false);
       }
 
       movePlayerSteps(player.id, total);

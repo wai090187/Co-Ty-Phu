@@ -129,14 +129,19 @@ export const useAIBotTurn = (ctx: AIContext) => {
       // 4. Station Ability
       else if (ctx.activeStationModal) {
         if (bot.consumableAbilities.length < 3) {
-          const affordable = ctx.consumableShop.filter(a => bot.cash >= a.cost + 200);
+          // Chỉ random các kỹ năng tự động kích hoạt cho AI
+          const autoAbilities = ctx.consumableShop.filter(
+            a => a.triggerCondition !== 'manual_anytime' && (a.quantity ?? 1) > 0
+          );
+          const candidatePool = autoAbilities.length > 0 ? autoAbilities : ctx.consumableShop.filter(a => (a.quantity ?? 1) > 0);
+          const affordable = candidatePool.filter(a => bot.cash >= a.cost + 150);
           if (affordable.length > 0) {
             const chosen = affordable[Math.floor(Math.random() * affordable.length)];
             ctx.buyConsumableAbility(chosen);
             ctx.setAiActionModalInfo?.({
               aiPlayer: bot,
-              title: 'Đã Mua Kỹ Năng Tại Bến Xe',
-              message: `${bot.name} vừa mua kỹ năng [${chosen.name}]: ${chosen.description}`,
+              title: 'Đã Mua Kỹ Năng Tự Động Kích Hoạt',
+              message: `${bot.name} vừa mua kỹ năng tự động [${chosen.name}]: ${chosen.description}`,
               type: 'skill',
             });
             return;

@@ -439,6 +439,199 @@ export const useInvestigatorTurn = (ctx: InvestigatorContext) => {
                   }
                   break;
                 }
+
+                // 11. Cấp phép quy hoạch: Nâng cấp nhà tự do
+                case 'inv_allow_house_upgrade': {
+                  const sameTilePlayers = activeSurvivors.filter(p => p.position === landedTile.id);
+                  if (sameTilePlayers.length > 0) {
+                    sameTilePlayers.forEach(p => {
+                      const upgradableTiles = p.propertiesOwned
+                        .map(tId => ctx.tiles[tId])
+                        .filter(t => t && t.type === 'property' && (p.houses[t.id] || 0) < 5);
+
+                      const affordable = upgradableTiles.filter(
+                        t => p.cash >= (t.houseCost || 50)
+                      );
+
+                      if (affordable.length > 0) {
+                        // Pick property with fewest houses or highest cost
+                        const targetTile = [...affordable].sort(
+                          (a, b) => (p.houses[a.id] || 0) - (p.houses[b.id] || 0)
+                        )[0];
+                        const cost = targetTile.houseCost || 50;
+                        p.cash -= cost;
+                        p.houses[targetTile.id] = (p.houses[targetTile.id] || 0) + 1;
+                        sounds.buildHouse();
+                        ctx.triggerCashTransfer(
+                          p.id,
+                          [],
+                          cost,
+                          `Nâng cấp nhà [${targetTile.name}] theo lệnh Điều Tra Viên`
+                        );
+                        ctx.addLog(
+                          `🏗️ [Cấp Phép Quy Hoạch] Điều Tra Viên đứng cùng ô với ${p.name}, cho phép ${p.name} nâng cấp 1 căn nhà trên [${targetTile.name}] với giá ${cost}đ (Hiện có ${p.houses[targetTile.id]} nhà)!`,
+                          'ability'
+                        );
+                      } else {
+                        ctx.addLog(
+                          `🕵️‍♂️ ${p.name} đứng cùng ô với Điều Tra Viên nhưng không có ô đất hợp lệ hoặc không đủ tiền nâng cấp nhà.`,
+                          'info'
+                        );
+                      }
+                    });
+                  } else {
+                    ctx.addLog(
+                      `🕵️‍♂️ Điều Tra Viên không đứng cùng ô với người chơi nào để cấp phép nâng cấp nhà.`,
+                      'info'
+                    );
+                  }
+                  break;
+                }
+
+                // 12. Tái điều tiết đất đai (chống độc quyền)
+                case 'inv_redistribute_land_poorest': {
+                  const playersWithLand = activeSurvivors.filter(
+                    p => (p.propertiesOwned?.length || 0) > 0
+                  );
+                  const mostLandPlayer = [...playersWithLand].sort(
+                    (a, b) =>
+                      b.propertiesOwned.length - a.propertiesOwned.length || b.cash - a.cash
+                  )[0];
+                  const leastLandPlayer = [...activeSurvivors].sort(
+                    (a, b) =>
+                      a.propertiesOwned.length - b.propertiesOwned.length || a.cash - b.cash
+                  )[0];
+
+                  const onSameTile =
+                    (mostLandPlayer && mostLandPlayer.position === landedTile.id) ||
+                    (leastLandPlayer && leastLandPlayer.position === landedTile.id);
+
+                  if (
+                    onSameTile &&
+                    mostLandPlayer &&
+                    leastLandPlayer &&
+                    mostLandPlayer.id !== leastLandPlayer.id &&
+                    mostLandPlayer.propertiesOwned.length > leastLandPlayer.propertiesOwned.length
+                  ) {
+                    // Find property of mostLandPlayer with lowest base price
+                    const cheapestTile = mostLandPlayer.propertiesOwned
+                      .map(tId => ctx.tiles[tId])
+                      .filter(Boolean)
+                      .sort((a, b) => (a.price || 0) - (b.price || 0))[0];
+
+                    if (cheapestTile) {
+                      const cost = cheapestTile.price || 100;
+                      if (leastLandPlayer.cash >= cost) {
+                        leastLandPlayer.cash -= cost;
+                        mostLandPlayer.cash += cost;
+                        ctx.triggerCashTransfer(
+                          leastLandPlayer.id,
+                          [mostLandPlayer.id],
+                          cost,
+                          `Tái điều tiết đất đai [${cheapestTile.name}]`
+                        );
+
+                        // Transfer ownership and demolish all houses to vacant
+                        mostLandPlayer.propertiesOwned = mostLandPlayer.propertiesOwned.filter(
+                          id => id !== cheapestTile.id
+                        );
+                        delete mostLandPlayer.houses[cheapestTile.id];
+                        delete mostLandPlayer.mortgaged[cheapestTile.id];
+
+                        leastLandPlayer.propertiesOwned.push(cheapestTile.id);
+                        leastLandPlayer.houses[cheapestTile.id] = 0; // Đất bị phá hết nhà, chỉ còn đất trống
+
+                        sounds.ability();
+                        ctx.addLog(
+                          `🏛️ [Tái Điều Tiết Đất Đai] Điều Tra Viên đứng cùng ô người sở hữu đất! Người ít đất nhất (${leastLandPlayer.name}) mua lại ô đất [${cheapestTile.name}] từ đại gia đất ${mostLandPlayer.name} với giá gốc ${cost}đ (toàn bộ nhà bị cưỡng chế phá sập về đất trống)!`,
+                          'ability'
+                        );
+                      } else {
+                        ctx.addLog(
+                          `🏛️ [Tái Điều Tiết Đất Đai] ${leastLandPlayer.name} không đủ ${cost}đ để mua lại [${cheapestTile.name}] từ ${mostLandPlayer.name}.`,
+                          'info'
+                        );
+                      }
+                    }
+                  } else {
+                    ctx.addLog(
+                      `🕵️‍♂️ Điều Tra Viên không đứng cùng ô người có nhiều đất nhất hoặc ít đất nhất, hoặc không có sự chênh lệch đất đai.`,
+                      'info'
+                    );
+                  }
+                  break;
+                }
+
+                // 13. Đặc quyền giao dịch: Mua đất trống hoặc bán giá gấp đôi
+                case 'inv_buy_vacant_or_double_sell': {
+                  const sameTilePlayers = activeSurvivors.filter(p => p.position === landedTile.id);
+                  if (sameTilePlayers.length > 0) {
+                    const allOwned = new Set(
+                      activeSurvivors.flatMap(p => p.propertiesOwned || [])
+                    );
+                    const vacantProperties = ctx.tiles.filter(
+                      t => t.type === 'property' && !allOwned.has(t.id)
+                    );
+
+                    sameTilePlayers.forEach(p => {
+                      const affordableVacant = vacantProperties.filter(
+                        t => p.cash >= (t.price || 0)
+                      );
+                      const ownedTiles = p.propertiesOwned
+                        .map(tId => ctx.tiles[tId])
+                        .filter(Boolean);
+
+                      // If affordable vacant exists and player has decent cash -> Buy vacant land!
+                      if (affordableVacant.length > 0 && p.cash >= 350) {
+                        const targetVacant = affordableVacant[0];
+                        p.cash -= targetVacant.price || 0;
+                        p.propertiesOwned.push(targetVacant.id);
+                        sounds.purchase();
+                        ctx.addLog(
+                          `🏙️ [Đặc Quyền Giao Dịch] ${p.name} đứng cùng ô với Điều Tra Viên, được phê chuẩn mua lô đất trống [${targetVacant.name}] với giá gốc ${targetVacant.price}đ!`,
+                          'ability'
+                        );
+                      }
+                      // Else if player owns properties -> Sell 1 property to bank at 2x price!
+                      else if (ownedTiles.length > 0) {
+                        const sellTile = ownedTiles[0];
+                        const basePrice = sellTile.price || 0;
+                        const houseCost =
+                          (p.houses[sellTile.id] || 0) * (sellTile.houseCost || 50);
+                        const totalInvested = basePrice + houseCost;
+                        const payout = totalInvested * 2;
+
+                        p.cash += payout;
+                        p.propertiesOwned = p.propertiesOwned.filter(id => id !== sellTile.id);
+                        delete p.houses[sellTile.id];
+                        delete p.mortgaged[sellTile.id];
+
+                        sounds.cash();
+                        ctx.triggerCashTransfer(
+                          0,
+                          [p.id],
+                          payout,
+                          `Nhà Nước thu hồi đất [${sellTile.name}] giá gấp đôi`
+                        );
+                        ctx.addLog(
+                          `💰 [Đặc Quyền Giao Dịch] ${p.name} đứng cùng ô với Điều Tra Viên, bán lại lô đất [${sellTile.name}] cho Nhà Nước với GIÁ GẤP ĐÔI (${payout}đ)! (Tiền gốc mua đất ${basePrice}đ + nhà ${houseCost}đ = ${totalInvested}đ × 2)`,
+                          'money'
+                        );
+                      } else {
+                        ctx.addLog(
+                          `🕵️‍♂️ ${p.name} đứng cùng ô với Điều Tra Viên nhưng không có tiền mua đất trống và cũng không có đất để bán.`,
+                          'info'
+                        );
+                      }
+                    });
+                  } else {
+                    ctx.addLog(
+                      `🕵️‍♂️ Điều Tra Viên không đứng cùng ô với người chơi nào để thực hiện giao dịch đặc quyền.`,
+                      'info'
+                    );
+                  }
+                  break;
+                }
               }
 
               return nextPlayers;

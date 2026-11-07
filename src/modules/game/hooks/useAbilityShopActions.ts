@@ -22,7 +22,8 @@ interface AbilityContext {
   setActiveUtilityModal: (t: any) => void;
   setActiveTargetAbility: (a: any) => void;
   setPendingDiceBoost: (v: number) => void;
-  setPendingDestroyHouseNext: (v: boolean) => void;
+  setPendingDestroyHousePlayerId?: (id: number | null) => void;
+  setPendingDestroyHouseNext?: (v: boolean) => void;
   addLog: (msg: string, type?: any) => void;
   triggerCashTransfer: (from: number, to: number[], amount: number, reason: string) => void;
   triggerCharacterEvent: (id: number, type: any, emotion: any, title: string, msg: string, cashDelta?: number) => void;
@@ -463,8 +464,15 @@ export const useAbilityShopActions = (ctx: AbilityContext) => {
             }
             break;
           case 'destroy_house':
-            ctx.setPendingDestroyHouseNext(true);
-            ctx.addLog(`💣 [Lệnh Phá Sập] Kích hoạt! Căn nhà đối thủ tiếp theo sẽ bị phá 1 cấp!`, 'ability');
+            if (ctx.setPendingDestroyHousePlayerId) {
+              ctx.setPendingDestroyHousePlayerId(p.id);
+            } else if (ctx.setPendingDestroyHouseNext) {
+              ctx.setPendingDestroyHouseNext(true);
+            }
+            ctx.addLog(
+              `💣 [Lệnh Phá Sập] ${p.name} kích hoạt! Căn nhà đối thủ tiếp theo mà ${p.name} dừng chân sẽ bị phá sập 1 cấp!`,
+              'ability'
+            );
             break;
           case 'draw_both_cards': {
             const c1 = ctx.chanceDeck.length > 0 ? ctx.chanceDeck[0] : null;

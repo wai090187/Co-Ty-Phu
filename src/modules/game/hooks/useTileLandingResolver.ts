@@ -14,8 +14,10 @@ interface LandingContext {
   setChestDeck: React.Dispatch<React.SetStateAction<Card[]>>;
   permanentShop: PermanentAbility[];
   consumableShop: ConsumableAbility[];
-  pendingDestroyHouseNext: boolean;
-  setPendingDestroyHouseNext: (v: boolean) => void;
+  pendingDestroyHousePlayerId?: number | null;
+  setPendingDestroyHousePlayerId?: (id: number | null) => void;
+  pendingDestroyHouseNext?: boolean;
+  setPendingDestroyHouseNext?: (v: boolean) => void;
   setHasMovedThisTurn: (v: boolean) => void;
   setPlayers: React.Dispatch<React.SetStateAction<Player[]>>;
   addLog: (msg: string, type?: any) => void;
@@ -183,8 +185,16 @@ export const useTileLandingResolver = (ctx: LandingContext) => {
               ctx.setIsLandingPropertyAction(true);
             }
           } else {
-            if (ctx.pendingDestroyHouseNext) {
-              ctx.setPendingDestroyHouseNext(false);
+            const isDestroyActive = ctx.pendingDestroyHousePlayerId
+              ? ctx.pendingDestroyHousePlayerId === player.id
+              : !!ctx.pendingDestroyHouseNext;
+
+            if (isDestroyActive) {
+              if (ctx.setPendingDestroyHousePlayerId) {
+                ctx.setPendingDestroyHousePlayerId(null);
+              } else if (ctx.setPendingDestroyHouseNext) {
+                ctx.setPendingDestroyHouseNext(false);
+              }
               const curHouses = owner.houses[tile.id] || 0;
               if (curHouses > 0) {
                 owner.houses[tile.id] = curHouses - 1;
@@ -276,7 +286,12 @@ export const useTileLandingResolver = (ctx: LandingContext) => {
 
           sounds.purchase();
           const unowned = ctx.consumableShop.filter(a => (a.quantity ?? 1) > 0);
-          const shuffled = [...unowned].sort(() => 0.5 - Math.random());
+          // If player is AI, ONLY offer automatic abilities (không chọn kỹ năng thủ công)
+          const pool = player.isAI
+            ? unowned.filter(a => a.triggerCondition !== 'manual_anytime')
+            : unowned;
+          const candidatePool = pool.length > 0 ? pool : unowned;
+          const shuffled = [...candidatePool].sort(() => 0.5 - Math.random());
           ctx.setOfferedStationAbilities(shuffled.slice(0, 2));
           ctx.setActiveStationModal(tile);
         }
