@@ -3,17 +3,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ConsumableAbility, PermanentAbility, Card } from '../../types/game';
+import { ConsumableAbility, PermanentAbility, Card, GameSettings } from '../../types/game';
 import {
   INITIAL_CONSUMABLE_ABILITIES,
   INITIAL_PERMANENT_ABILITIES,
 } from '../../data/abilities';
 import { INITIAL_CHANCE_CARDS, INITIAL_CHEST_CARDS } from '../../data/cards';
 
-const CONSUMABLES_DB_KEY = 'co_ty_phu_consumable_shop_db_v3';
-const PERMANENTS_DB_KEY = 'co_ty_phu_permanent_shop_db_v3';
-const CHANCE_DB_KEY = 'co_ty_phu_chance_deck_db_v3';
-const CHEST_DB_KEY = 'co_ty_phu_chest_deck_db_v3';
+export const CONSUMABLES_DB_KEY = 'co_ty_phu_consumable_shop_db_v3';
+export const PERMANENTS_DB_KEY = 'co_ty_phu_permanent_shop_db_v3';
+export const CHANCE_DB_KEY = 'co_ty_phu_chance_deck_db_v3';
+export const CHEST_DB_KEY = 'co_ty_phu_chest_deck_db_v3';
+export const SETTINGS_CACHE_KEY = 'co_ty_phu_settings_cache_v3';
+export const USER_DEFAULT_SETTINGS_KEY = 'co_ty_phu_user_default_settings_v3';
 
 /**
  * Tải danh sách kỹ năng Dùng 1 Lần từ Database (localStorage).
@@ -150,4 +152,45 @@ export const resetAbilitiesDbToDefault = (): {
     chance: INITIAL_CHANCE_CARDS,
     chest: INITIAL_CHEST_CARDS,
   };
+};
+
+/**
+ * Lưu cấu hình cài đặt hiện tại làm MẶC ĐỊNH của máy này
+ */
+export const saveSettingsAsUserDefault = (settings: GameSettings): void => {
+  try {
+    localStorage.setItem(USER_DEFAULT_SETTINGS_KEY, JSON.stringify(settings));
+    localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(settings));
+  } catch (err) {
+    console.error('Failed to save user default settings:', err);
+  }
+};
+
+/**
+ * Đọc cấu hình mặc định đã lưu của máy này (nếu có)
+ */
+export const loadUserDefaultSettings = (): GameSettings | null => {
+  try {
+    const raw = localStorage.getItem(USER_DEFAULT_SETTINGS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (typeof parsed === 'object' && parsed !== null) {
+        return parsed as GameSettings;
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load user default settings:', err);
+  }
+  return null;
+};
+
+/**
+ * Xóa cấu hình mặc định đã lưu của máy này (khôi phục về mặc định gốc hệ thống)
+ */
+export const clearUserDefaultSettings = (): void => {
+  try {
+    localStorage.removeItem(USER_DEFAULT_SETTINGS_KEY);
+  } catch (err) {
+    console.error('Failed to clear user default settings:', err);
+  }
 };

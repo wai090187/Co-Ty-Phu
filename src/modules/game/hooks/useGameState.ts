@@ -71,6 +71,11 @@ const loadCachedSettings = (): GameSettings => {
       const parsed = JSON.parse(raw);
       return { ...DEFAULT_SETTINGS, ...parsed };
     }
+    const userDefRaw = localStorage.getItem('co_ty_phu_user_default_settings_v3');
+    if (userDefRaw) {
+      const userDef = JSON.parse(userDefRaw);
+      return { ...DEFAULT_SETTINGS, ...userDef };
+    }
   } catch (e) {
     console.error('Failed to load cached settings', e);
   }
