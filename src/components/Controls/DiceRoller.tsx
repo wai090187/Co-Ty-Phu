@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { sounds } from '../../utils/soundEngine';
+import { Dice3D } from './Dice3D';
 
 interface Props {
   dice: [number, number];
@@ -25,17 +26,18 @@ export const DiceRoller: React.FC<Props> = ({
 }) => {
   const [animating, setAnimating] = useState(false);
   const [displayDice, setDisplayDice] = useState<[number, number]>(dice);
-  const [rotation, setRotation] = useState<[number, number]>([0, 0]);
   const [showDoubleEffect, setShowDoubleEffect] = useState(false);
   const animIntervalRef = useRef<any>(null);
 
   // Sync displayDice with actual dice prop when not rolling
   useEffect(() => {
     if (!animating && !isRolling) {
-      setDisplayDice(dice);
-      if (dice[0] === dice[1] && dice[0] > 0) {
+      const d1 = dice[0] || 1;
+      const d2 = dice[1] || 1;
+      setDisplayDice([d1, d2]);
+      if (d1 === d2 && d1 > 0) {
         setShowDoubleEffect(true);
-        const t = setTimeout(() => setShowDoubleEffect(false), 2000);
+        const t = setTimeout(() => setShowDoubleEffect(false), 2400);
         return () => clearTimeout(t);
       }
     }
@@ -49,9 +51,9 @@ export const DiceRoller: React.FC<Props> = ({
     sounds.rollDice();
 
     if (dramaticRoll) {
-      // Dramatic Roll: 1100ms with fast random face shuffling & rotational tumble
+      // Dramatic Roll: 1000ms with 3D tumble physics and dynamic face shifts
       const startTime = Date.now();
-      const duration = 1100;
+      const duration = 1000;
 
       animIntervalRef.current = setInterval(() => {
         const elapsed = Date.now() - startTime;
@@ -60,110 +62,74 @@ export const DiceRoller: React.FC<Props> = ({
             Math.floor(Math.random() * 6) + 1,
             Math.floor(Math.random() * 6) + 1,
           ]);
-          setRotation([
-            Math.floor(Math.random() * 30) - 15,
-            Math.floor(Math.random() * 30) - 15,
-          ]);
         } else {
           clearInterval(animIntervalRef.current);
-          setRotation([0, 0]);
           setAnimating(false);
           onRoll();
         }
-      }, 70);
+      }, 75);
     } else {
-      // Standard quick roll
       setTimeout(() => {
         setAnimating(false);
         onRoll();
-      }, 400);
+      }, 350);
     }
   };
 
+  const rollingNow = animating || isRolling;
   const isDouble = displayDice[0] === displayDice[1];
-
-  const renderPipGrid = (val: number, rot: number) => {
-    const pips: Record<number, number[]> = {
-      1: [4],
-      2: [2, 6],
-      3: [2, 4, 6],
-      4: [0, 2, 6, 8],
-      5: [0, 2, 4, 6, 8],
-      6: [0, 2, 3, 5, 6, 8],
-    };
-
-    const activePips = pips[val] || [4];
-
-    return (
-      <div
-        style={{
-          transform: `rotate(${rot}deg)`,
-          transition: animating ? 'transform 0.07s ease-out' : 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-        }}
-        className={`grid grid-cols-3 grid-rows-3 w-11 h-11 p-1.5 gap-1 bg-[#FFFDF9] border-2 border-slate-900 rounded-xl shadow-lg relative ${
-          animating
-            ? 'scale-110 shadow-amber-500/40 ring-2 ring-amber-400'
-            : isDouble && showDoubleEffect
-            ? 'ring-4 ring-emerald-400 animate-pulse'
-            : ''
-        }`}
-      >
-        {/* Subtle 3D dice specular highlight */}
-        <div className="absolute top-0.5 left-1 right-1 h-1 bg-white/70 rounded-t-lg pointer-events-none" />
-
-        {Array.from({ length: 9 }).map((_, i) => (
-          <div key={i} className="flex items-center justify-center">
-            {activePips.includes(i) && (
-              <div
-                className={`w-2.5 h-2.5 rounded-full shadow-inner ${
-                  val === 1
-                    ? 'bg-rose-600 scale-125 ring-1 ring-rose-700'
-                    : val === 4
-                    ? 'bg-rose-600'
-                    : 'bg-slate-900'
-                }`}
-              />
-            )}
-          </div>
-        ))}
-      </div>
-    );
-  };
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <div className="relative flex items-center justify-center gap-3 py-1">
-        {renderPipGrid(displayDice[0], rotation[0])}
-        {renderPipGrid(displayDice[1], rotation[1])}
+      {/* 3D Dice Stage with shadow backdrop */}
+      <div className="relative flex items-center justify-center gap-4 py-2 px-3 rounded-2xl bg-radial from-slate-900/5 to-transparent">
+        <Dice3D
+          value={displayDice[0] || 1}
+          isRolling={rollingNow}
+          size={50}
+          tiltOffset={{ x: 12, y: 15, z: -8 }}
+        />
+        <Dice3D
+          value={displayDice[1] || 1}
+          isRolling={rollingNow}
+          size={50}
+          tiltOffset={{ x: -10, y: -18, z: 12 }}
+        />
 
         {/* Double Celebration Banner */}
-        {showDoubleEffect && isDouble && !animating && !isRolling && (
-          <div className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 bg-gradient-to-r from-amber-500 to-emerald-500 text-white font-black text-[10px] rounded-full shadow-md animate-bounce">
-            🎉 ĐÔI! +1 LƯỢT ĐI
+        {showDoubleEffect && isDouble && !rollingNow && (
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-0.5 bg-gradient-to-r from-amber-500 via-rose-500 to-emerald-500 text-white font-black text-[11px] rounded-full shadow-lg border border-white/40 animate-bounce tracking-wide z-10">
+            🎲✨ ĐÔI! +1 LƯỢT ĐI
           </div>
         )}
       </div>
 
       <button
         onClick={handleRollClick}
-        disabled={disabled || isRolling || animating}
-        className={`px-4 py-2 sm:py-2.5 rounded-xl font-display font-black text-xs sm:text-sm tracking-wider uppercase shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-2 ${
-          disabled || isRolling
+        disabled={disabled || rollingNow}
+        className={`px-4 py-2.5 rounded-xl font-display font-black text-xs sm:text-sm tracking-wider uppercase shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-2 ${
+          disabled || rollingNow
             ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
-            : 'bg-gradient-to-r from-red-600 to-rose-700 text-white hover:from-red-500 hover:to-rose-600 hover:shadow-red-500/30'
+            : 'bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white hover:from-red-500 hover:to-rose-600 hover:shadow-red-500/30 ring-1 ring-red-400/40'
         }`}
       >
         <span>
-          {animating || isRolling
-            ? 'Đang Lắc Xúc Xắc...'
+          {rollingNow
+            ? '🎲 Đang Lắc Xúc Xắc...'
             : isExtraRoll
             ? '🎲 Tung Tiếp (Đôi)'
             : 'Tung Xúc Xắc'}
         </span>
-        {!disabled && !isRolling && !animating && (
-          <kbd className="px-1.5 py-0.5 text-[9.5px] bg-white/25 text-white rounded border border-white/40 font-mono shadow-xs">
-            Space
-          </kbd>
+        {!disabled && !rollingNow && (
+          <div className="flex items-center gap-1">
+            <kbd className="px-1.5 py-0.5 text-[9px] bg-white/20 text-white rounded border border-white/30 font-mono">
+              Space
+            </kbd>
+            <span className="text-[10px] text-white/60">/</span>
+            <kbd className="px-1.5 py-0.5 text-[9px] bg-white/20 text-white rounded border border-white/30 font-mono">
+              Enter
+            </kbd>
+          </div>
         )}
       </button>
     </div>

@@ -353,25 +353,37 @@ export const AddCustomAbilityForm: React.FC<Props> = ({
       className="p-3.5 bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-500 rounded-2xl shadow-xl flex flex-col gap-3 animate-in fade-in duration-200"
     >
       {/* Header with Title and Mode */}
-      <div className="flex items-center justify-between pb-2 border-b border-emerald-200">
-        <div className="flex items-center gap-2">
-          <span className="text-xl">{isEditing ? '✏️' : '✨'}</span>
-          <div>
-            <h3 className="font-display font-black text-xs sm:text-sm text-emerald-950 uppercase tracking-wide">
+      <div className="flex items-center justify-between pb-2 border-b border-emerald-200 gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-xl shrink-0">{isEditing ? '✏️' : '✨'}</span>
+          <div className="min-w-0">
+            <h3 className="font-display font-black text-xs sm:text-sm text-emerald-950 uppercase tracking-wide truncate">
               {isEditing ? `Chỉnh Sửa Năng Lực: ${editingAbility?.name}` : 'Thiết Kế Năng Lực Mới (Quy Trình 4 Bước)'}
             </h3>
-            <span className="text-[10px] text-emerald-700 block">
+            <span className="text-[10px] text-emerald-700 block truncate">
               Lựa chọn tuần tự từng bước để kích hoạt các tùy chọn tương thích.
             </span>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-6 h-6 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-700 flex items-center justify-center font-bold text-xs"
-        >
-          ✕
-        </button>
+
+        {/* Action Buttons in Title: Save / Update + Close */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="submit"
+            className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black rounded-xl shadow-md text-xs transition-all flex items-center gap-1.5 border border-emerald-400 cursor-pointer"
+          >
+            <span>💾</span>
+            <span>{isEditing ? 'Lưu Cập Nhật Năng Lực' : 'Tạo Năng Lực'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-7 h-7 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-700 flex items-center justify-center font-bold text-xs cursor-pointer"
+            title="Đóng"
+          >
+            ✕
+          </button>
+        </div>
       </div>
 
       {/* Row 1: Name, Icon, Cost & Quantity */}

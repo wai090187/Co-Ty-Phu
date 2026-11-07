@@ -29,3 +29,41 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.35);
 }
+
+/* 3D Dice Physics Animations */
+@keyframes diceTumble {
+  0% {
+    transform: translateY(-18px) rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(1.08);
+  }
+  25% {
+    transform: translateY(-30px) rotateX(110deg) rotateY(90deg) rotateZ(45deg) scale(1.14);
+  }
+  50% {
+    transform: translateY(-14px) rotateX(230deg) rotateY(200deg) rotateZ(120deg) scale(1.06);
+  }
+  75% {
+    transform: translateY(-26px) rotateX(315deg) rotateY(310deg) rotateZ(210deg) scale(1.12);
+  }
+  100% {
+    transform: translateY(-18px) rotateX(360deg) rotateY(360deg) rotateZ(360deg) scale(1.08);
+  }
+}
+
+@keyframes diceSettleBounce {
+  0% {
+    transform: translateY(-28px) scale(1.1);
+  }
+  45% {
+    transform: translateY(0px) scale(0.92, 1.08);
+  }
+  70% {
+    transform: translateY(-8px) scale(1.04, 0.96);
+  }
+  85% {
+    transform: translateY(0px) scale(0.98, 1.02);
+  }
+  100% {
+    transform: translateY(0px) scale(1, 1);
+  }
+}
+

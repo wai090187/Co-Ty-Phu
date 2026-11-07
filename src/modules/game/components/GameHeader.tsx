@@ -1,4 +1,5 @@
 import React from 'react';
+import { APP_VERSION } from '../../../constants/version';
 
 interface Props {
   isPlaying: boolean;
@@ -26,9 +27,14 @@ export const GameHeader: React.FC<Props> = ({
           C
         </div>
         <div>
-          <h1 className="font-display font-black text-base sm:text-lg tracking-wider uppercase text-amber-400">
-            Cờ Tỷ Phú Việt Nam
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="font-display font-black text-base sm:text-lg tracking-wider uppercase text-amber-400">
+              Cờ Tỷ Phú Việt Nam
+            </h1>
+            <span className="px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 font-mono text-[10px] font-bold border border-amber-400/40">
+              {APP_VERSION}
+            </span>
+          </div>
           <span className="text-[10px] text-slate-400 font-medium block -mt-0.5">
             Bản Sài Gòn Xưa · 40 Ô Kinh Điển
           </span>

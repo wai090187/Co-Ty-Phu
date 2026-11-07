@@ -269,14 +269,23 @@ export const useMovementController = (ctx: MovementContext) => {
             }
           }
 
-          // Lượt 1 hoặc 2 thất bại (chưa đủ 3 lượt): Người chơi KHÔNG được di chuyển, bị giữ lại!
-          ctx.addLog(
-            isInvestigation
-              ? `🔒 [Ra Tù Thất Bại] ${player.name} tung [${d1}][${d2}] (không phải số đôi) - Thoát điều tra thất bại! (Đã điều tra: ${player.jailTurns}/3 lượt)`
-              : `🔒 [Ra Tù Thất Bại] ${player.name} tung [${d1}][${d2}] (không phải số đôi) - Ra tù thất bại! (Lượt ở tù: ${player.jailTurns}/3)`,
-            'jail'
-          );
-          return;
+          // Lượt 1 hoặc 2 thất bại (chưa đủ 3 lượt):
+          if (isInvestigation) {
+            // Chế độ công an điều tra: Vẫn cho phép người chơi di chuyển nhưng vẫn bị hình phạt điều tra
+            ctx.addLog(
+              `🚨 [Đang Bị Điều Tra] ${player.name} tung [${d1}][${d2}] (không phải số đôi) - Vẫn được di chuyển ${total} bước nhưng tiếp tục chịu hình phạt điều tra (giảm 50% thu nhập, tăng 50% chi phí)! (Lượt điều tra: ${player.jailTurns}/3)`,
+              'jail'
+            );
+            movePlayerSteps(player.id, total);
+            return;
+          } else {
+            // Chế độ tù thường: Bị nhốt lại, không được di chuyển
+            ctx.addLog(
+              `🔒 [Ra Tù Thất Bại] ${player.name} tung [${d1}][${d2}] (không phải số đôi) - Ra tù thất bại! (Lượt ở tù: ${player.jailTurns}/3)`,
+              'jail'
+            );
+            return;
+          }
         }
       }
 

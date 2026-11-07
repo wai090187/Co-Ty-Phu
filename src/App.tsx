@@ -129,8 +129,8 @@ export default function App() {
         return;
       }
 
-      // Space to Roll dice or End turn
-      if (e.code === 'Space' || e.key === ' ') {
+      // Space or Enter to Roll dice or End turn
+      if (e.code === 'Space' || e.key === ' ' || e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter') {
         if (!game.isPlaying) return;
 
         // Check if any modal is currently blocking

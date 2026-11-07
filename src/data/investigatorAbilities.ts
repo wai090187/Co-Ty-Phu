@@ -116,6 +116,14 @@ export const ALL_INVESTIGATOR_ABILITIES: InvestigatorAbility[] = [
     description:
       'Sau khi di chuyển, nếu đứng cùng ô với người chơi, cho phép họ được mua 1 lô đất còn trống bất kỳ trên bàn cờ (trả đủ tiền) hoặc bán lại 1 lô đất đang sở hữu cho ngân hàng với giá gấp đôi (tổng tiền đất + nhà x2).',
   },
+  {
+    id: 'inv_grant_or_swap_permanent',
+    name: 'Đặc Xá & Trao Quyền VIP (Năng Lực Vĩnh Viễn)',
+    icon: 'crown',
+    shortDesc: 'Đứng cùng ô/cạnh 1 ô: Miễn phí nhận 1 năng lực VIP hoặc đổi sang cái khác',
+    description:
+      'Sau khi di chuyển, nếu đứng cùng ô hoặc bên cạnh người chơi khác (khoảng cách 1 ô), người chơi được phép nhận miễn phí 1 năng lực vĩnh viễn (nếu chưa có) hoặc đổi sang 1 năng lực vĩnh viễn khác (nếu đã có). Mỗi người chơi tối đa chỉ được sở hữu 1 năng lực vĩnh viễn.',
+  },
 ];
 
 /**

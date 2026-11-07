@@ -1,6 +1,7 @@
 import React from 'react';
 import { AIDifficulty, SetupPlayerConfig } from '../../../types/game';
 import { CharacterAvatar } from '../../characters/components/CharacterAvatar';
+import { APP_VERSION } from '../../../constants/version';
 
 interface Props {
   playerConfigs: SetupPlayerConfig[];
@@ -22,9 +23,11 @@ export const GameSetupScreen: React.FC<Props> = ({
       <div className="w-full bg-[#FAF8F5] border-2 border-slate-900 rounded-3xl shadow-2xl p-6 sm:p-8 flex flex-col gap-6 animate-in fade-in zoom-in-95 duration-200">
         {/* Hero Header */}
         <div className="text-center">
-          <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 font-extrabold text-xs uppercase tracking-widest border border-red-200">
-            Board Game Truyền Thống
-          </span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-100 text-red-700 font-extrabold text-xs uppercase tracking-widest border border-red-200">
+            <span>Board Game Truyền Thống</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+            <span className="font-mono text-red-800">{APP_VERSION}</span>
+          </div>
           <h2 className="font-display text-4xl sm:text-5xl font-black text-slate-900 tracking-tight uppercase mt-2 mb-1">
             CỜ TỶ PHÚ SÀI GÒN
           </h2>

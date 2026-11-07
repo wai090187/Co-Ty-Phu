@@ -17,7 +17,7 @@ export const canPlayerPayBailCheck = (
     return {
       canPay: false,
       cost: 0,
-      reason: 'Chế độ Bị công an điều tra không cho phép bảo lãnh. Cần tung đôi, dùng thẻ ra tù hoặc chấp hành xong 3 lượt điều tra để được thả tự do!',
+      reason: 'Chế độ Bị công an điều tra không cho phép bảo lãnh. Người chơi vẫn được di chuyển trên bàn cờ nhưng chịu hình phạt giảm 50% thu nhập và tăng 50% chi phí!',
     };
   }
 
