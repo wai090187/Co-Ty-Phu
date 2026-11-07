@@ -36,6 +36,7 @@ interface LandingContext {
   setCheatNextChanceCardId?: (id: string | null) => void;
   cheatNextChestCardId?: string | null;
   setCheatNextChestCardId?: (id: string | null) => void;
+  investigator?: import('../../../types/game').SpecialInvestigatorState;
 }
 
 export const useTileLandingResolver = (ctx: LandingContext) => {
@@ -138,20 +139,84 @@ export const useTileLandingResolver = (ctx: LandingContext) => {
           });
         }
 
+        // Thu Phí Lân Cận (Vĩnh Viễn) - perm-neighbor-toll
+        // 1. Nếu người chơi vừa di chuyển có perm-neighbor-toll: Thu 50đ từ tất cả người đứng cùng ô hoặc cạnh 1 ô
+        if (player.permanentAbilities.includes('perm-neighbor-toll')) {
+          const neighbors = prevPlayers.filter(
+            p =>
+              p.id !== player.id &&
+              !p.bankrupt &&
+              (p.position === landedTileId ||
+                (p.position + 1) % 40 === landedTileId ||
+                (p.position - 1 + 40) % 40 === landedTileId)
+          );
+          if (neighbors.length > 0) {
+            let totalToll = 0;
+            neighbors.forEach(n => {
+              const toll = Math.min(n.cash, 50);
+              if (toll > 0) {
+                n.cash -= toll;
+                totalToll += toll;
+                ctx.triggerCashTransfer(n.id, [player.id], toll, 'Thu Phí Lân Cận (Vĩnh Viễn)');
+                ctx.addLog(
+                  `👑 [Thu Phí Lân Cận] ${player.name} thu ${toll}đ từ ${n.name} do đứng cùng ô/lân cận 1 ô!`,
+                  'money'
+                );
+              }
+            });
+            if (totalToll > 0) {
+              player.cash += totalToll;
+              sounds.cash();
+            }
+          }
+        }
+
+        // 2. Nếu người khác đang đứng cùng ô hoặc cạnh 1 ô có perm-neighbor-toll: Thu 50đ từ người vừa dừng chân
+        prevPlayers.forEach(other => {
+          if (
+            other.id !== player.id &&
+            !other.bankrupt &&
+            other.permanentAbilities.includes('perm-neighbor-toll') &&
+            (other.position === landedTileId ||
+              (other.position + 1) % 40 === landedTileId ||
+              (other.position - 1 + 40) % 40 === landedTileId)
+          ) {
+            const toll = Math.min(player.cash, 50);
+            if (toll > 0) {
+              player.cash -= toll;
+              other.cash += toll;
+              sounds.cash();
+              ctx.triggerCashTransfer(player.id, [other.id], toll, 'Thu Phí Lân Cận (Vĩnh Viễn)');
+              ctx.addLog(
+                `👑 [Thu Phí Lân Cận] ${other.name} thu ${toll}đ từ ${player.name} vừa dừng chân cạnh bên/cùng ô!`,
+                'money'
+              );
+            }
+          }
+        });
+
         // Corner fortune ability
         if (tile.type === 'corner' && player.permanentAbilities.includes('perm-corner-fortune')) {
-          ctx.setActiveAbilityNotification({
-            id: 'corner-bonus',
-            title: 'Đại Gia Tứ Góc (Vĩnh Viễn)',
-            description: `${player.name} vừa dừng chân tại ô góc [${tile.name}]. Bạn được nhận thêm 100đ từ Ngân Hàng!`,
-            action: () => {
-              sounds.cash();
-              ctx.setPlayers(curr =>
-                curr.map(cp => (cp.id === player.id ? { ...cp, cash: cp.cash + 100 } : cp))
-              );
-              ctx.addLog(`👑 [Đại Gia Tứ Góc] ${player.name} nhận thêm 100đ từ Ngân Hàng!`, 'money');
-            },
-          });
+          if (player.isAI) {
+            sounds.cash();
+            player.cash += 100;
+            ctx.triggerCashTransfer(0, [player.id], 100, 'Đại Gia Tứ Góc (Vĩnh Viễn)');
+            ctx.addLog(`👑 [Đại Gia Tứ Góc] ${player.name} nhận thêm 100đ từ Ngân Hàng!`, 'money');
+          } else {
+            ctx.setActiveAbilityNotification({
+              id: 'corner-bonus',
+              title: 'Đại Gia Tứ Góc (Vĩnh Viễn)',
+              description: `${player.name} vừa dừng chân tại ô góc [${tile.name}]. Bạn được nhận thêm 100đ từ Ngân Hàng!`,
+              action: () => {
+                sounds.cash();
+                ctx.setPlayers(curr =>
+                  curr.map(cp => (cp.id === player.id ? { ...cp, cash: cp.cash + 100 } : cp))
+                );
+                ctx.triggerCashTransfer(0, [player.id], 100, 'Đại Gia Tứ Góc (Vĩnh Viễn)');
+                ctx.addLog(`👑 [Đại Gia Tứ Góc] ${player.name} nhận thêm 100đ từ Ngân Hàng!`, 'money');
+              },
+            });
+          }
         }
 
         // 1. Property Tile
@@ -222,7 +287,14 @@ export const useTileLandingResolver = (ctx: LandingContext) => {
                   'ability'
                 );
               } else {
-                let rent = calculatePropertyRent(tile, owner, ctx.tiles, ctx.settings);
+                let rent = calculatePropertyRent(tile, owner, ctx.tiles, ctx.settings, ctx.investigator);
+                if (ctx.investigator?.active) {
+                  if (ctx.investigator.currentAbilityId === 'inv_double_rent_round') {
+                    ctx.addLog(`📈 [Thị Trường Sôi Động] Giá thuê đất được nhân đôi (x2) theo sắc lệnh Điều Tra Viên!`, 'ability');
+                  } else if (ctx.investigator.currentAbilityId === 'inv_half_rent_round') {
+                    ctx.addLog(`📉 [Trợ Giá Khủng Hoảng] Giá thuê đất được giảm còn ½ theo sắc lệnh Điều Tra Viên!`, 'ability');
+                  }
+                }
                 if (player.hasHalfRentDiscountNextTurn) {
                   rent = Math.ceil(rent * 0.5);
                   player.hasHalfRentDiscountNextTurn = false;

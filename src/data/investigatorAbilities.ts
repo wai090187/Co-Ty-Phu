@@ -124,6 +124,22 @@ export const ALL_INVESTIGATOR_ABILITIES: InvestigatorAbility[] = [
     description:
       'Sau khi di chuyển, nếu đứng cùng ô hoặc bên cạnh người chơi khác (khoảng cách 1 ô), người chơi được phép nhận miễn phí 1 năng lực vĩnh viễn (nếu chưa có) hoặc đổi sang 1 năng lực vĩnh viễn khác (nếu đã có). Mỗi người chơi tối đa chỉ được sở hữu 1 năng lực vĩnh viễn.',
   },
+  {
+    id: 'inv_double_rent_round',
+    name: 'Thị Trường Sôi Động (Giá Thuê Đất x2)',
+    icon: 'trending-up',
+    shortDesc: 'Vòng này toàn bộ đất trên bàn cờ tăng gấp đôi tiền thuê (x2)',
+    description:
+      'Trong suốt vòng chơi này (cho đến khi Điều Tra Viên tuần tra vòng tiếp theo), tất cả các ô đất trên toàn bàn cờ sẽ tăng gấp đôi tiền thuê đất (x2 giá thuê)!',
+  },
+  {
+    id: 'inv_half_rent_round',
+    name: 'Trợ Giá Khủng Hoảng (Giá Thuê Đất ½)',
+    icon: 'trending-down',
+    shortDesc: 'Vòng này toàn bộ đất trên bàn cờ giảm 50% tiền thuê (còn ½)',
+    description:
+      'Trong suốt vòng chơi này (cho đến khi Điều Tra Viên tuần tra vòng tiếp theo), tất cả các ô đất trên toàn bàn cờ sẽ được giảm 50% tiền thuê đất (giảm còn ½ giá thuê)!',
+  },
 ];
 
 /**

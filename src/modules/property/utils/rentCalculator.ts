@@ -61,7 +61,8 @@ export const calculatePropertyRent = (
   tile: Tile,
   owner: Player,
   tiles: Tile[],
-  settings: GameSettings
+  settings: GameSettings,
+  investigator?: { active: boolean; currentAbilityId: string }
 ): number => {
   if (!tile.rents || tile.type !== 'property') return 0;
   const houses = owner.houses[tile.id] || 0;
@@ -89,6 +90,15 @@ export const calculatePropertyRent = (
   // Jail rent penalty: e.g. 50%
   if (owner.inJail) {
     rent = Math.ceil(rent * (settings.jailRentPercent / 100));
+  }
+
+  // Investigator round rent modifiers (x2 or 1/2)
+  if (investigator?.active) {
+    if (investigator.currentAbilityId === 'inv_double_rent_round') {
+      rent = Math.ceil(rent * 2);
+    } else if (investigator.currentAbilityId === 'inv_half_rent_round') {
+      rent = Math.max(1, Math.floor(rent * 0.5));
+    }
   }
 
   return rent;

@@ -35,6 +35,7 @@ interface InvestigatorContext {
   addLog: (msg: string, type?: any) => void;
   triggerCashTransfer: (from: number, to: number[], amount: number, reason: string) => void;
   setAiActionModalInfo: (info: any) => void;
+  setActiveDrawnCard?: (c: Card | null) => void;
   setDice: (d: [number, number]) => void;
   onInvestigatorTurnComplete: () => void;
 }
@@ -480,19 +481,114 @@ export const useInvestigatorTurn = (ctx: InvestigatorContext) => {
                     activeSurvivors.forEach(p => {
                       const drawn =
                         pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)] : null;
-                      if (drawn) {
-                        ctxRef.current.addLog(
-                          `🃏 [Biến Cố Khí Vận] ${p.name} bốc được lá [${drawn.title}: ${drawn.description}] từ lệnh kiểm toán của Điều Tra Viên!`,
-                          'ability'
-                        );
-                        if (drawn.actionType === 'cash_bonus' && drawn.value) {
-                          p.cash += drawn.value;
-                          ctxRef.current.triggerCashTransfer(0, [p.id], drawn.value, drawn.title);
-                        } else if (drawn.actionType === 'cash_penalty' && drawn.value) {
-                          const penalty = Math.min(p.cash, drawn.value);
+                      if (!drawn) return;
+
+                      ctxRef.current.addLog(
+                        `🃏 [Biến Cố Khí Vận] ${p.name} bốc được lá [${drawn.title}: ${drawn.description}] từ lệnh kiểm toán của Điều Tra Viên!`,
+                        'ability'
+                      );
+
+                      // Kích hoạt đầy đủ các loại hiệu ứng của thẻ bài
+                      switch (drawn.actionType) {
+                        case 'cash_bonus': {
+                          const val = drawn.value || 100;
+                          p.cash += val;
+                          ctxRef.current.triggerCashTransfer(0, [p.id], val, drawn.title);
+                          break;
+                        }
+                        case 'cash_penalty': {
+                          const penalty = Math.min(p.cash, drawn.value || 100);
                           p.cash -= penalty;
                           ctxRef.current.triggerCashTransfer(p.id, [], penalty, drawn.title);
+                          break;
                         }
+                        case 'birthday': {
+                          const gift = drawn.value || 20;
+                          let totalGift = 0;
+                          activeSurvivors.forEach(other => {
+                            if (other.id !== p.id && !other.bankrupt) {
+                              const actual = Math.min(other.cash, gift);
+                              other.cash -= actual;
+                              totalGift += actual;
+                              ctxRef.current.triggerCashTransfer(other.id, [p.id], actual, `Mừng sinh nhật ${p.name}`);
+                            }
+                          });
+                          p.cash += totalGift;
+                          ctxRef.current.addLog(`🎂 ${p.name} nhận quà sinh nhật tổng cộng ${totalGift}đ!`, 'money');
+                          break;
+                        }
+                        case 'get_out_of_jail': {
+                          p.getOutOfJailCards = (p.getOutOfJailCards || 0) + 1;
+                          ctxRef.current.addLog(`🕊️ ${p.name} nhận được 1 Thẻ Ra Tù Miễn Phí!`, 'info');
+                          break;
+                        }
+                        case 'go_to_jail': {
+                          if ((p.getOutOfJailCards || 0) > 0) {
+                            p.getOutOfJailCards = (p.getOutOfJailCards || 0) - 1;
+                            p.position = 10;
+                            p.inJail = false;
+                            p.jailTurns = 0;
+                            ctxRef.current.addLog(
+                              `🕊️ [Thẻ Ra Tù Miễn Phí] ${p.name} tự động dùng thẻ hóa giải lệnh bắt vào tù!`,
+                              'ability'
+                            );
+                          } else {
+                            p.position = 10;
+                            p.inJail = true;
+                            p.jailTurns = 0;
+                            sounds.jail();
+                            ctxRef.current.addLog(`🚨 ${p.name} bị tống giam vào tù theo lệnh bài!`, 'jail');
+                          }
+                          break;
+                        }
+                        case 'move_to': {
+                          const targetPos = drawn.targetTileId ?? 0;
+                          p.position = targetPos;
+                          sounds.step();
+                          ctxRef.current.addLog(
+                            `🚶 ${p.name} dịch chuyển đến [${ctxRef.current.tiles[targetPos]?.name || targetPos}]!`,
+                            'info'
+                          );
+                          if (targetPos === 0) {
+                            const bonus = ctxRef.current.settings.goExactBonus || 400;
+                            p.cash += bonus;
+                            ctxRef.current.triggerCashTransfer(0, [p.id], bonus, 'Trúng ô Khởi Hành');
+                            ctxRef.current.addLog(`🎯 ${p.name} về đúng Trạm Khởi Hành nhận ${bonus}đ!`, 'money');
+                          }
+                          break;
+                        }
+                        case 'move_relative': {
+                          const steps = drawn.value || 0;
+                          const newPos = (p.position + steps + 40) % 40;
+                          p.position = newPos;
+                          sounds.step();
+                          ctxRef.current.addLog(
+                            `🚶 ${p.name} ${steps > 0 ? `tiến ${steps}` : `lùi ${Math.abs(steps)}`} bước đến [${ctxRef.current.tiles[newPos]?.name || newPos}]!`,
+                            'info'
+                          );
+                          break;
+                        }
+                        case 'house_repair': {
+                          let houses = 0;
+                          let hotels = 0;
+                          Object.values(p.houses || {}).forEach(h => {
+                            if (h === 5) hotels++;
+                            else if (h > 0) houses += h;
+                          });
+                          const cost = houses * 25 + hotels * 100;
+                          if (cost > 0) {
+                            const actualCost = Math.min(p.cash, cost);
+                            p.cash -= actualCost;
+                            ctxRef.current.triggerCashTransfer(p.id, [], actualCost, 'Sửa chữa nhà cửa');
+                            ctxRef.current.addLog(`🔨 ${p.name} thanh toán ${actualCost}đ chi phí tu sửa nhà cửa!`, 'property');
+                          }
+                          break;
+                        }
+                      }
+
+                      // Nếu là người chơi thực (không phải bot), hiển thị popup thẻ bài lên màn hình
+                      if (!p.isAI && ctxRef.current.setActiveDrawnCard) {
+                        ctxRef.current.setActiveDrawnCard(drawn);
                       }
                     });
                     sounds.ability();
@@ -771,6 +867,26 @@ export const useInvestigatorTurn = (ctx: InvestigatorContext) => {
                       }
                     });
                   }
+                  break;
+                }
+
+                // 15. Thị Trường Sôi Động (Giá Thuê Đất x2)
+                case 'inv_double_rent_round': {
+                  sounds.ability();
+                  ctxRef.current.addLog(
+                    `🔥 [Thị Trường Sôi Động] Điều Tra Viên ban bố sắc lệnh: Trong suốt vòng chơi này, TẤT CẢ GIÁ THUÊ ĐẤT TRÊN TOÀN BÀN CỜ ĐƯỢC NHÂN ĐÔI (x2)!`,
+                    'ability'
+                  );
+                  break;
+                }
+
+                // 16. Trợ Giá Khủng Hoảng (Giá Thuê Đất ½)
+                case 'inv_half_rent_round': {
+                  sounds.ability();
+                  ctxRef.current.addLog(
+                    `📉 [Trợ Giá Khủng Hoảng] Điều Tra Viên ban bố gói cứu trợ: Trong suốt vòng chơi này, TẤT CẢ GIÁ THUÊ ĐẤT TRÊN TOÀN BÀN CỜ ĐƯỢC GIẢM CÒN ½ (giảm 50%)!`,
+                    'ability'
+                  );
                   break;
                 }
               }

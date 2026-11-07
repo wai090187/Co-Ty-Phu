@@ -50,8 +50,8 @@ export const useMonopolyGame = () => {
 
   const calculateRent = useCallback(
     (tile: Tile, owner: Player) =>
-      calculatePropertyRent(tile, owner, state.tiles, state.settings),
-    [state.tiles, state.settings]
+      calculatePropertyRent(tile, owner, state.tiles, state.settings, state.investigator),
+    [state.tiles, state.settings, state.investigator]
   );
 
   // Hook 1: Tile landing resolver
@@ -84,6 +84,7 @@ export const useMonopolyGame = () => {
     setCheatNextChanceCardId: state.setCheatNextChanceCardId,
     cheatNextChestCardId: state.cheatNextChestCardId,
     setCheatNextChestCardId: state.setCheatNextChestCardId,
+    investigator: state.investigator,
   });
 
   // Hook 2: Movement controller
@@ -267,6 +268,7 @@ export const useMonopolyGame = () => {
     addLog: state.addLog,
     triggerCashTransfer,
     setAiActionModalInfo: state.setAiActionModalInfo,
+    setActiveDrawnCard: state.setActiveDrawnCard,
     setDice: state.setDice,
     onInvestigatorTurnComplete: () => {
       state.setCanRoll(true);
