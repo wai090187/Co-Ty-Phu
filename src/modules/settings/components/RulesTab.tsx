@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GameSettings } from '../../../types/game';
+import { GameSettings, Card, ConsumableAbility, PermanentAbility } from '../../../types/game';
 import { InvestigationRuleCard } from './InvestigationRuleCard';
 import { DisplaySettingsCard } from './DisplaySettingsCard';
 import { InvestigatorSettingsCard } from './InvestigatorSettingsCard';
@@ -7,22 +7,49 @@ import {
   saveSettingsAsUserDefault,
   loadUserDefaultSettings,
   clearUserDefaultSettings,
+  saveFullConfigAsUserDefault,
+  loadFullConfigUserDefault,
+  clearFullConfigUserDefault,
+  hasUserDefaultConfig,
+  FullGameConfigPackage,
 } from '../../storage/abilitiesDb';
 
 interface Props {
   settings: GameSettings;
   onChange: (newSettings: GameSettings) => void;
+  chanceDeck?: Card[];
+  chestDeck?: Card[];
+  consumableShop?: ConsumableAbility[];
+  permanentShop?: PermanentAbility[];
+  onSetChanceDeck?: (cards: Card[]) => void;
+  onSetChestDeck?: (cards: Card[]) => void;
+  onSetConsumableShop?: (abilities: ConsumableAbility[]) => void;
+  onSetPermanentShop?: (abilities: PermanentAbility[]) => void;
+  onResetAbilitiesToDefault?: () => void;
 }
 
-export const RulesTab: React.FC<Props> = ({ settings, onChange }) => {
+export const RulesTab: React.FC<Props> = ({
+  settings,
+  onChange,
+  chanceDeck = [],
+  chestDeck = [],
+  consumableShop = [],
+  permanentShop = [],
+  onSetChanceDeck,
+  onSetChestDeck,
+  onSetConsumableShop,
+  onSetPermanentShop,
+  onResetAbilitiesToDefault,
+}) => {
   const [hasUserDefault, setHasUserDefault] = useState(false);
   const [statusNotice, setStatusNotice] = useState<string | null>(null);
   const [showJsonTool, setShowJsonTool] = useState(false);
+  const [jsonMode, setJsonMode] = useState<'full' | 'settings'>('full');
   const [jsonText, setJsonText] = useState('');
   const [copiedToast, setCopiedToast] = useState(false);
 
   useEffect(() => {
-    setHasUserDefault(!!loadUserDefaultSettings());
+    setHasUserDefault(hasUserDefaultConfig());
   }, []);
   return (
     <div className="p-4 overflow-y-auto flex-1 flex flex-col gap-3.5 text-xs">
@@ -272,18 +299,18 @@ export const RulesTab: React.FC<Props> = ({ settings, onChange }) => {
       </div>
 
       {/* LocalStorage Cache & User Default Settings Control */}
-      <div className="p-3.5 bg-gradient-to-br from-slate-50 to-indigo-50/50 border border-indigo-200/80 rounded-xl flex flex-col gap-3">
+      <div className="p-3.5 bg-gradient-to-br from-slate-50 via-indigo-50/40 to-emerald-50/30 border border-indigo-200/90 rounded-xl flex flex-col gap-3 shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="text-xl">💾</span>
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-bold text-slate-900 text-xs">
-                  Thiết Lập Mặc Định Trên Máy Này
+                  Thiết Lập Mặc Định Của Máy Này
                 </span>
                 {hasUserDefault ? (
                   <span className="px-1.5 py-0.2 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded text-[9.5px] font-bold">
-                    ⭐ Đã có Mặc Định Riêng
+                    ⭐ Đã Lưu Mặc Định Riêng
                   </span>
                 ) : (
                   <span className="px-1.5 py-0.2 bg-slate-200 text-slate-700 rounded text-[9.5px] font-bold">
@@ -292,35 +319,40 @@ export const RulesTab: React.FC<Props> = ({ settings, onChange }) => {
                 )}
               </div>
               <span className="text-[10px] text-slate-500 mt-0.5 block">
-                Bạn có thể biến thiết lập hiện tại thành mặc định của máy, hoặc khôi phục bất kỳ lúc nào.
+                Lưu toàn bộ: <strong>Luật chơi</strong> + <strong>Thẻ Cơ Hội/Khí Vận</strong> ({chanceDeck.length + chestDeck.length}) + <strong>Thiết Kế Năng Lực</strong> ({consumableShop.length + permanentShop.length}) làm Mặc Định của máy.
               </span>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5">
-            {/* 1. Make Current Setting as Default */}
+            {/* 1. Make Current Setting as Default (FULL PACKAGE) */}
             <button
               type="button"
               onClick={() => {
-                saveSettingsAsUserDefault(settings);
+                saveFullConfigAsUserDefault({
+                  settings,
+                  chanceDeck,
+                  chestDeck,
+                  consumableShop,
+                  permanentShop,
+                });
                 setHasUserDefault(true);
                 setStatusNotice(
-                  '⭐ Đã lưu thiết lập hiện tại thành MẶC ĐỊNH trên máy này thành công! Mọi ván chơi mới hoặc lần build sau sẽ tự động dùng thiết lập này.'
+                  `⭐ Đã lưu TOÀN BỘ CẤU HÌNH (Luật + ${chanceDeck.length} thẻ Cơ Hội + ${chestDeck.length} thẻ Khí Vận + ${consumableShop.length} kỹ năng 1 lần + ${permanentShop.length} năng lực vĩnh viễn) thành MẶC ĐỊNH trên máy này thành công! Mọi ván chơi mới hoặc lần build sau sẽ tự động dùng thiết lập này.`
                 );
-                setTimeout(() => setStatusNotice(null), 5000);
+                setTimeout(() => setStatusNotice(null), 6000);
               }}
               className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold rounded-lg text-[11px] shadow-sm transition-all flex items-center gap-1 cursor-pointer"
-              title="Lưu toàn bộ các giá trị bạn đang cấu hình thành Mặc Định của trò chơi trên thiết bị này"
+              title="Lưu toàn bộ Luật + Thẻ + Thiết kế năng lực thành Mặc Định của thiết bị này"
             >
               <span>⭐</span>
-              <span>Đặt Làm Mặc Định</span>
+              <span>Đặt Toàn Bộ Làm Mặc Định</span>
             </button>
 
-            {/* 2. Restore Default */}
+            {/* 2. Restore Full Default */}
             <button
               type="button"
               onClick={() => {
-                const userDef = loadUserDefaultSettings();
                 const systemDefaults = {
                   startingCash: 2000,
                   goExactBonus: 400,
@@ -348,16 +380,30 @@ export const RulesTab: React.FC<Props> = ({ settings, onChange }) => {
                   investigatorStartRound: 2,
                   investigatorAbilityChangeRounds: 1,
                 };
-                if (userDef) {
-                  onChange(userDef);
-                  setStatusNotice('🔄 Đã nạp lại thiết lập mặc định của bạn trên máy này!');
+
+                const fullDef = loadFullConfigUserDefault();
+                if (fullDef) {
+                  onChange(fullDef.settings);
+                  if (onSetChanceDeck && Array.isArray(fullDef.chanceDeck)) onSetChanceDeck(fullDef.chanceDeck);
+                  if (onSetChestDeck && Array.isArray(fullDef.chestDeck)) onSetChestDeck(fullDef.chestDeck);
+                  if (onSetConsumableShop && Array.isArray(fullDef.consumableShop)) onSetConsumableShop(fullDef.consumableShop);
+                  if (onSetPermanentShop && Array.isArray(fullDef.permanentShop)) onSetPermanentShop(fullDef.permanentShop);
+                  setStatusNotice('🔄 Đã khôi phục toàn bộ Cài đặt, Thẻ Cơ Hội/Khí Vận & Năng Lực mặc định của bạn trên máy này!');
                 } else {
-                  onChange(systemDefaults);
-                  setStatusNotice('🔄 Đã khôi phục về thiết lập mặc định của trò chơi!');
+                  const userDef = loadUserDefaultSettings();
+                  if (userDef) {
+                    onChange(userDef);
+                    setStatusNotice('🔄 Đã nạp lại thiết lập mặc định của bạn trên máy này!');
+                  } else {
+                    onChange(systemDefaults);
+                    if (onResetAbilitiesToDefault) onResetAbilitiesToDefault();
+                    setStatusNotice('🔄 Đã khôi phục về thiết lập mặc định gốc của trò chơi!');
+                  }
                 }
-                setTimeout(() => setStatusNotice(null), 3500);
+                setTimeout(() => setStatusNotice(null), 4000);
               }}
               className="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-800 font-bold rounded-lg border border-slate-300 text-[11px] shadow-2xs transition-colors cursor-pointer"
+              title="Khôi phục toàn bộ cài đặt, thẻ bài và năng lực về cấu hình mặc định đã lưu"
             >
               🔄 Khôi Phục Mặc Định
             </button>
@@ -367,7 +413,7 @@ export const RulesTab: React.FC<Props> = ({ settings, onChange }) => {
               <button
                 type="button"
                 onClick={() => {
-                  clearUserDefaultSettings();
+                  clearFullConfigUserDefault();
                   setHasUserDefault(false);
                   const systemDefaults = {
                     startingCash: 2000,
@@ -397,8 +443,9 @@ export const RulesTab: React.FC<Props> = ({ settings, onChange }) => {
                     investigatorAbilityChangeRounds: 1,
                   };
                   onChange(systemDefaults);
-                  setStatusNotice('Đã xóa mặc định riêng và trở về gốc hệ thống!');
-                  setTimeout(() => setStatusNotice(null), 3000);
+                  if (onResetAbilitiesToDefault) onResetAbilitiesToDefault();
+                  setStatusNotice('Đã xóa toàn bộ mặc định riêng và trở về mặc định gốc ban đầu của game!');
+                  setTimeout(() => setStatusNotice(null), 3500);
                 }}
                 className="px-2 py-1.5 bg-slate-200 hover:bg-red-100 text-slate-700 hover:text-red-700 font-bold rounded-lg text-[10px] transition-colors cursor-pointer"
                 title="Xóa mặc định tùy biến và trở về mặc định gốc ban đầu của game"
@@ -411,13 +458,34 @@ export const RulesTab: React.FC<Props> = ({ settings, onChange }) => {
             <button
               type="button"
               onClick={() => {
-                setShowJsonTool(!showJsonTool);
-                setJsonText(JSON.stringify(settings, null, 2));
+                const nextState = !showJsonTool;
+                setShowJsonTool(nextState);
+                if (nextState) {
+                  if (jsonMode === 'full') {
+                    setJsonText(
+                      JSON.stringify(
+                        {
+                          version: '1.3.0',
+                          savedAt: new Date().toISOString(),
+                          settings,
+                          chanceDeck,
+                          chestDeck,
+                          consumableShop,
+                          permanentShop,
+                        },
+                        null,
+                        2
+                      )
+                    );
+                  } else {
+                    setJsonText(JSON.stringify(settings, null, 2));
+                  }
+                }
               }}
               className="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-lg text-[10.5px] border border-slate-300 transition-colors cursor-pointer"
               title="Xem / Nhập / Xuất mã JSON cấu hình"
             >
-              📋 {showJsonTool ? 'Ẩn JSON' : 'JSON'}
+              📋 {showJsonTool ? 'Ẩn JSON' : 'JSON Tool'}
             </button>
           </div>
         </div>
@@ -431,44 +499,115 @@ export const RulesTab: React.FC<Props> = ({ settings, onChange }) => {
 
         {/* JSON Inspector / Import tool */}
         {showJsonTool && (
-          <div className="mt-1 pt-2 border-t border-slate-200 flex flex-col gap-1.5 animate-in fade-in duration-150">
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="font-bold text-slate-700">Mã JSON cấu hình hiện tại:</span>
+          <div className="mt-1 pt-2.5 border-t border-slate-200 flex flex-col gap-2 animate-in fade-in duration-150">
+            <div className="flex flex-wrap items-center justify-between gap-1.5 text-[11px]">
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-slate-700">Chế độ xuất/nhập:</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setJsonMode('full');
+                    setJsonText(
+                      JSON.stringify(
+                        {
+                          version: '1.3.0',
+                          savedAt: new Date().toISOString(),
+                          settings,
+                          chanceDeck,
+                          chestDeck,
+                          consumableShop,
+                          permanentShop,
+                        },
+                        null,
+                        2
+                      )
+                    );
+                  }}
+                  className={`px-2 py-0.5 rounded font-bold text-[10px] transition-colors cursor-pointer ${
+                    jsonMode === 'full'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                  }`}
+                >
+                  📦 Toàn Bộ Game (Luật + Thẻ + Năng Lực)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setJsonMode('settings');
+                    setJsonText(JSON.stringify(settings, null, 2));
+                  }}
+                  className={`px-2 py-0.5 rounded font-bold text-[10px] transition-colors cursor-pointer ${
+                    jsonMode === 'settings'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                  }`}
+                >
+                  ⚙️ Chỉ Luật & Tiền Tệ
+                </button>
+              </div>
+
               <div className="flex gap-1.5">
                 <button
                   type="button"
                   onClick={() => {
-                    navigator.clipboard.writeText(JSON.stringify(settings, null, 2));
+                    navigator.clipboard.writeText(jsonText);
                     setCopiedToast(true);
                     setTimeout(() => setCopiedToast(false), 2000);
                   }}
-                  className="px-2 py-0.5 bg-white border border-slate-300 rounded font-bold text-slate-700 hover:bg-slate-50 text-[10px] cursor-pointer"
+                  className="px-2.5 py-1 bg-white border border-slate-300 rounded font-bold text-slate-700 hover:bg-slate-50 text-[10px] cursor-pointer"
                 >
-                  {copiedToast ? '✅ Đã Chép' : '📋 Sao Chép'}
+                  {copiedToast ? '✅ Đã Chép' : '📋 Sao Chép JSON'}
                 </button>
                 <button
                   type="button"
                   onClick={() => {
                     try {
                       const parsed = JSON.parse(jsonText);
-                      onChange(parsed);
-                      setStatusNotice('✅ Đã nạp thành công cấu hình từ JSON!');
-                      setTimeout(() => setStatusNotice(null), 3000);
+                      // Check if it's a full package
+                      if (parsed && typeof parsed === 'object') {
+                        if (parsed.settings) {
+                          onChange(parsed.settings);
+                          if (Array.isArray(parsed.chanceDeck) && onSetChanceDeck) {
+                            onSetChanceDeck(parsed.chanceDeck);
+                          }
+                          if (Array.isArray(parsed.chestDeck) && onSetChestDeck) {
+                            onSetChestDeck(parsed.chestDeck);
+                          }
+                          if (Array.isArray(parsed.consumableShop) && onSetConsumableShop) {
+                            onSetConsumableShop(parsed.consumableShop);
+                          }
+                          if (Array.isArray(parsed.permanentShop) && onSetPermanentShop) {
+                            onSetPermanentShop(parsed.permanentShop);
+                          }
+                          setStatusNotice('✅ Đã nạp thành công TOÀN BỘ gói cấu hình (Luật + Thẻ + Năng lực) từ JSON!');
+                        } else if (parsed.startingCash !== undefined) {
+                          // Standard GameSettings object
+                          onChange(parsed);
+                          setStatusNotice('✅ Đã nạp thành công cấu hình luật chơi từ JSON!');
+                        } else {
+                          alert('Mã JSON không đúng định dạng cấu hình game!');
+                          return;
+                        }
+                        setTimeout(() => setStatusNotice(null), 3500);
+                      }
                     } catch {
-                      alert('Mã JSON không hợp lệ!');
+                      alert('Mã JSON không hợp lệ! Vui lòng kiểm tra lại cú pháp.');
                     }
                   }}
-                  className="px-2 py-0.5 bg-indigo-600 text-white rounded font-bold text-[10px] hover:bg-indigo-700 cursor-pointer"
+                  className="px-2.5 py-1 bg-emerald-600 text-white rounded font-bold text-[10px] hover:bg-emerald-700 cursor-pointer shadow-2xs"
                 >
-                  Áp Dụng JSON
+                  Áp Dụng JSON Này
                 </button>
               </div>
             </div>
+
             <textarea
               value={jsonText}
               onChange={e => setJsonText(e.target.value)}
-              rows={6}
-              className="w-full font-mono text-[10.5px] p-2 bg-white border border-slate-300 rounded-lg text-slate-800"
+              rows={7}
+              className="w-full font-mono text-[10px] p-2 bg-white border border-slate-300 rounded-lg text-slate-800"
+              placeholder="Dán mã JSON cấu hình vào đây và nhấn Áp Dụng JSON Này..."
             />
           </div>
         )}

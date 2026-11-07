@@ -62,6 +62,10 @@ export const GameModalsContainer: React.FC<GameModalsProps> = ({
   onUpdatePermanent,
   onDeleteAbility,
   onResetAbilitiesToDefault,
+  onSetChanceDeck,
+  onSetChestDeck,
+  onSetConsumableShop,
+  onSetPermanentShop,
   onCloseSettings,
   pickingCharacterPlayerIdx,
   selectedCharacterId,
@@ -180,6 +184,10 @@ export const GameModalsContainer: React.FC<GameModalsProps> = ({
           onUpdatePermanent={onUpdatePermanent}
           onDeleteAbility={onDeleteAbility}
           onResetAbilitiesToDefault={onResetAbilitiesToDefault}
+          onSetChanceDeck={onSetChanceDeck}
+          onSetChestDeck={onSetChestDeck}
+          onSetConsumableShop={onSetConsumableShop}
+          onSetPermanentShop={onSetPermanentShop}
           onClose={onCloseSettings}
         />
       )}

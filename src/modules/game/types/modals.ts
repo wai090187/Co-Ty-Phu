@@ -65,6 +65,10 @@ export interface GameModalsProps {
   onUpdatePermanent?: (ability: PermanentAbility) => void;
   onDeleteAbility?: (abilityId: string, kind: 'consumable' | 'permanent') => void;
   onResetAbilitiesToDefault?: () => void;
+  onSetChanceDeck?: (cards: Card[]) => void;
+  onSetChestDeck?: (cards: Card[]) => void;
+  onSetConsumableShop?: (abilities: ConsumableAbility[]) => void;
+  onSetPermanentShop?: (abilities: PermanentAbility[]) => void;
   onCloseSettings: () => void;
 
   pickingCharacterPlayerIdx: number | null;

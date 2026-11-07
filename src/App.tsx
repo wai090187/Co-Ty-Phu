@@ -301,6 +301,10 @@ export default function App() {
           }
         }}
         onResetAbilitiesToDefault={game.resetAbilitiesToDefault}
+        onSetChanceDeck={game.setChanceDeck}
+        onSetChestDeck={game.setChestDeck}
+        onSetConsumableShop={game.setConsumableShop}
+        onSetPermanentShop={game.setPermanentShop}
         onCloseSettings={() => setShowSettings(false)}
         pickingCharacterPlayerIdx={pickingCharacterPlayerIdx}
         selectedCharacterId={
