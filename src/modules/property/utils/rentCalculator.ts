@@ -68,10 +68,13 @@ export const calculatePropertyRent = (
   const houses = owner.houses[tile.id] || 0;
   let rent = tile.rents[houses] || tile.rentBase || 0;
 
-  // Unimproved vacant land custom percent setting
-  if (houses === 0 && tile.price) {
-    const customVacantRent = Math.ceil(tile.price * (settings.vacantLandRentPercent / 100));
-    rent = Math.max(customVacantRent, tile.rents[0] || 0);
+  // Unimproved vacant land custom percent of base rent (default 100%)
+  if (houses === 0) {
+    const baseRent = tile.rents[0] ?? tile.rentBase ?? 0;
+    if (baseRent > 0) {
+      const percent = settings.vacantLandRentPercent ?? 100;
+      rent = Math.max(1, Math.ceil(baseRent * (percent / 100)));
+    }
   }
 
   // Color group boost rule: +10% per same color owned

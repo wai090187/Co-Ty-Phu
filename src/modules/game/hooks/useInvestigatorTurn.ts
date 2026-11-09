@@ -75,11 +75,11 @@ export const useInvestigatorTurn = (ctx: InvestigatorContext) => {
 
     sounds.rollDice();
     ctxRef.current.addLog(
-      `🕵️‍♂️ [ĐIỀU TRA VIÊN] Bắt đầu lượt tuần tra, tung được [${d1}][${d2}] (Tổng: ${totalSteps} bước)`,
+      `🕵️‍♂️ [ĐIỀU TRA VIÊN] Bắt đầu lượt tuần tra ngược chiều, tung được [${d1}][${d2}] (Tổng: ${totalSteps} bước lùi)`,
       'ability'
     );
 
-    // 2. Step-by-step movement
+    // 2. Step-by-step movement (Counter-clockwise: 0 -> 39 -> 38 -> ... -> 0)
     let remainingSteps = totalSteps;
     ctxRef.current.setIsInvestigatorMoving(true);
 
@@ -92,14 +92,15 @@ export const useInvestigatorTurn = (ctx: InvestigatorContext) => {
 
       ctxRef.current.setInvestigator(prev => {
         const oldPos = prev.position;
-        const newPos = (oldPos + 1) % 40;
+        // Đi ngược vòng với người chơi
+        const newPos = (oldPos - 1 + 40) % 40;
         sounds.step();
 
         let laps = prev.lapsCompleted;
         let currentAbilityId = prev.currentAbilityId;
         let usedAbilityIds = [...prev.usedAbilityIds];
 
-        // Đi qua hoặc dừng trúng Trạm Khởi Hành (ô 0)
+        // Hoàn thành vòng tuần tra khi đi qua hoặc dừng trúng Trạm Khởi Hành (ô 0)
         if (newPos === 0) {
           laps += 1;
           const cycleRounds = Math.max(
@@ -113,7 +114,7 @@ export const useInvestigatorTurn = (ctx: InvestigatorContext) => {
 
             sounds.ability();
             ctxRef.current.addLog(
-              `✨ [ĐIỀU TRA VIÊN - ĐỔI NĂNG LỰC] Đã đi qua Khởi Hành (${laps} vòng)! Kích hoạt năng lực ngẫu nhiên mới: [${next.ability.name}] - ${next.ability.shortDesc}`,
+              `✨ [ĐIỀU TRA VIÊN - ĐỔI NĂNG LỰC] Đã hoàn thành vòng tuần tra ngược chiều (${laps} vòng)! Kích hoạt năng lực ngẫu nhiên mới: [${next.ability.name}] - ${next.ability.shortDesc}`,
               'ability'
             );
           }

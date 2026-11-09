@@ -106,13 +106,13 @@ export const BailAndRentRulesCard: React.FC<Props> = ({ settings, onChange }) =>
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1 p-3 bg-white border border-slate-200 rounded-xl">
           <label className="font-bold text-slate-900 flex items-center gap-1">
-            <span>🏞️</span> % Tiền Thuế Đất Trống (% giá đất):
+            <span>🏞️</span> % Tiền Thuế Đất Trống (% giá thuê gốc):
           </label>
           <div className="flex items-center gap-2">
             <input
               type="number"
               min="1"
-              max="100"
+              max="500"
               value={settings.vacantLandRentPercent}
               onChange={e =>
                 onChange({ ...settings, vacantLandRentPercent: Number(e.target.value) })
@@ -122,7 +122,7 @@ export const BailAndRentRulesCard: React.FC<Props> = ({ settings, onChange }) =>
             <span className="font-bold text-slate-600">%</span>
           </div>
           <span className="text-[10px] text-slate-500">
-            Tiền thuê đất khi chưa xây nhà = Max(tiền thẻ, % giá đất)
+            Tiền thuê đất khi chưa xây nhà = Giá thuê gốc × % (mặc định 100%)
           </span>
         </div>
 

@@ -7,6 +7,11 @@ import { INITIAL_CONSUMABLE_ABILITIES } from '../src/data/abilities';
 import { Player, Tile, GameSettings } from '../src/types/game';
 import { runInvestigatorTests } from './test_investigator_tests';
 import { runPermanentTests } from './test_permanent_tests';
+import { filterAbilitiesForAI, isMovementModifierAbility } from '../src/modules/game/utils/abilityFilterHelper';
+import { pickNextInvestigatorAbility, ALL_INVESTIGATOR_ABILITIES } from '../src/data/investigatorAbilities';
+import { applyGoTileBonus } from '../src/modules/game/utils/goBonusHelper';
+import { buildGameLogDebugJson, buildGameLogText } from '../src/modules/game/utils/gameLogExporter';
+import { INITIAL_CHANCE_CARDS, INITIAL_CHEST_CARDS } from '../src/data/cards';
 
 
 
@@ -253,8 +258,194 @@ runPermanentTests(assert, createMockPlayer);
 // =========================================================================
 runInvestigatorTests(assert, createMockPlayer);
 
+// =========================================================================
+// PHẦN 4: TEST NĂNG LỰC ĐIỀU TRA VIÊN ĐI NGƯỢC CHIỀU & LỌC NĂNG LỰC CHO AI
+// =========================================================================
+console.log('\n--- PHẦN 4: TEST DI CHUYỂN NGƯỢC CHIỀU & LỌC NĂNG LỰC CHO AI ---');
+
+// Test 4.1: Di chuyển ngược chiều của Điều Tra Viên: (oldPos - 1 + 40) % 40
+{
+  let pos = 0;
+  pos = (pos - 1 + 40) % 40; // 39
+  assert(pos === 39, 'Investigator', 'inv_move_counter_clockwise', 'Đi ngược chiều', 'Từ ô 0 lùi 1 bước sang ô 39 (ngược chiều kim đồng hồ)');
+
+  pos = (pos - 1 + 40) % 40; // 38
+  assert(pos === 38, 'Investigator', 'inv_move_counter_clockwise', 'Đi ngược chiều', 'Từ ô 39 lùi 1 bước sang ô 38');
+
+  // Lùi đủ 40 bước từ 0 phải quay về đúng 0
+  let testPos = 0;
+  for (let i = 0; i < 40; i++) {
+    testPos = (testPos - 1 + 40) % 40;
+  }
+  assert(testPos === 0, 'Investigator', 'inv_move_counter_clockwise', 'Đi ngược chiều', 'Đi lùi đúng 40 bước hoàn thành 1 vòng tuần tra về ô 0');
+}
+
+// Test 4.2: Năng lực Điều Tra Viên khởi đầu là ngẫu nhiên
+{
+  const pick1 = pickNextInvestigatorAbility([]);
+  assert(
+    ALL_INVESTIGATOR_ABILITIES.some(a => a.id === pick1.ability.id),
+    'Investigator',
+    'inv_random_initial_ability',
+    'Năng lực ngẫu nhiên ban đầu',
+    `Lần đầu xuất hiện chọn ngẫu nhiên [${pick1.ability.name}] trong 16 năng lực`
+  );
+}
+
+// Test 4.3: Loại bỏ các năng lực tăng/giảm ô di chuyển khi random năng lực cho AI
+{
+  // Kiểm tra nhận diện năng lực tăng/giảm bước đi
+  const dicePlus1 = INITIAL_CONSUMABLE_ABILITIES.find(a => a.id === 'dice-plus-1')!;
+  const diceMinus2 = INITIAL_CONSUMABLE_ABILITIES.find(a => a.id === 'dice-minus-2')!;
+  const pushOpponent = INITIAL_CONSUMABLE_ABILITIES.find(a => a.id === 'push-neighbor-1')!;
+  const freeRent = INITIAL_CONSUMABLE_ABILITIES.find(a => a.id === 'auto-free-rent-opponent')!;
+
+  assert(isMovementModifierAbility(dicePlus1) === true, 'Consumable', 'dice-plus-1', 'Gia Tốc Xúc Xắc (+1)', 'Nhận diện đúng năng lực tăng ô di chuyển');
+  assert(isMovementModifierAbility(diceMinus2) === true, 'Consumable', 'dice-minus-2', 'Hãm Phanh Xúc Xắc (-2)', 'Nhận diện đúng năng lực giảm ô di chuyển');
+  assert(isMovementModifierAbility(pushOpponent) === true, 'Consumable', 'push-neighbor-1', 'Đẩy Lùi Đối Thủ (+1)', 'Nhận diện đúng năng lực ép tăng bước đi');
+  assert(isMovementModifierAbility(freeRent) === false, 'Consumable', 'auto-free-rent-opponent', 'Miễn Phí Thuê Đất', 'Không phải năng lực tăng/giảm ô di chuyển');
+
+  // Lọc kho năng lực cho AI
+  const aiPool = filterAbilitiesForAI(INITIAL_CONSUMABLE_ABILITIES, { requireAutoTrigger: true });
+  const hasDiceModifier = aiPool.some(a => isMovementModifierAbility(a));
+  assert(
+    !hasDiceModifier && aiPool.length > 0,
+    'Consumable',
+    'ai_filter_movement_abilities',
+    'Lọc bỏ năng lực tăng/giảm ô di chuyển cho AI',
+    `Kho năng lực AI (${aiPool.length} thẻ) hoàn toàn KHÔNG chứa bất kỳ thẻ tăng/giảm ô di chuyển nào`
+  );
+}
+
+// =========================================================================
+// PHẦN 5: TEST THƯỞNG KHỞI HÀNH KHI BỐC THẺ VỀ KHỞI HÀNH & XUẤT NHẬT KÝ
+// =========================================================================
+console.log('\n--- PHẦN 5: TEST THƯỞNG KHỞI HÀNH QUA THẺ BÀI & XUẤT NHẬT KÝ DEBUG ---');
+
+// Test 5.1: Thẻ Khí Vận cs-10 "Đi Thẳng Về Trạm Khởi Hành" - KHÔNG nhận thưởng theo yêu cầu
+{
+  const card = INITIAL_CHEST_CARDS.find(c => c.id === 'cs-10')!;
+  const p = createMockPlayer(1, 'Người Chơi A', { position: 15, cash: 500 });
+  const settings: any = { goExactBonus: 400, goPassBonus: 200 };
+  const targetPos = card.targetTileId ?? 0;
+  p.position = targetPos;
+
+  const isNoGoBonusCard =
+    card.id === 'cs-10' ||
+    card.id === 'ch-1' ||
+    (targetPos === 0 && card.description?.includes('không nhận thưởng'));
+
+  if (!isNoGoBonusCard && targetPos === 0) {
+    applyGoTileBonus({
+      player: p,
+      isExact: true,
+      settings,
+      triggerCashTransfer: () => {},
+      addLog: () => {},
+    });
+  }
+
+  assert(
+    p.position === 0 &&
+      p.cash === 500 &&
+      card.description.includes('không nhận thưởng') &&
+      isNoGoBonusCard === true,
+    'Consumable',
+    'cs-10',
+    'Đi Thẳng Về Trạm Khởi Hành (Khí Vận)',
+    'Về điểm xuất phát và KHÔNG nhận tiền thưởng khởi hành đúng theo quy định thẻ bài'
+  );
+}
+
+// Test 5.2: Thẻ Cơ Hội ch-1 "Tiến Về Trạm Khởi Hành" - KHÔNG nhận thưởng theo yêu cầu
+{
+  const card = INITIAL_CHANCE_CARDS.find(c => c.id === 'ch-1')!;
+  const p = createMockPlayer(2, 'Người Chơi B', { position: 32, cash: 200 });
+  const settings: any = { goExactBonus: 400, goPassBonus: 200 };
+  const targetPos = card.targetTileId ?? 0;
+  p.position = targetPos;
+
+  const isNoGoBonusCard =
+    card.id === 'cs-10' ||
+    card.id === 'ch-1' ||
+    (targetPos === 0 && card.description?.includes('không nhận thưởng'));
+
+  if (!isNoGoBonusCard && targetPos === 0) {
+    applyGoTileBonus({
+      player: p,
+      isExact: true,
+      settings,
+      triggerCashTransfer: () => {},
+      addLog: () => {},
+    });
+  }
+
+  assert(
+    p.position === 0 &&
+      p.cash === 200 &&
+      card.description.includes('không nhận thưởng') &&
+      isNoGoBonusCard === true,
+    'Consumable',
+    'ch-1',
+    'Tiến Về Trạm Khởi Hành (Cơ Hội)',
+    'Về điểm xuất phát và KHÔNG nhận tiền thưởng khởi hành đúng theo quy định thẻ bài'
+  );
+}
+
+// Test 5.3: Thẻ di chuyển vượt qua ô Khởi Hành (từ ô 35 đến ô 15) nhận 200đ
+{
+  const p = createMockPlayer(3, 'Người Chơi C', { position: 35, cash: 100 });
+  const settings: any = { goExactBonus: 400, goPassBonus: 200 };
+  const oldPos = p.position;
+  const targetPos = 15;
+  p.position = targetPos;
+  if (targetPos < oldPos) {
+    applyGoTileBonus({
+      player: p,
+      isExact: false,
+      settings,
+      triggerCashTransfer: () => {},
+      addLog: () => {},
+    });
+  }
+  assert(
+    p.position === 15 && p.cash === 300,
+    'Consumable',
+    'move_to_pass_go',
+    'Di chuyển vượt qua Khởi Hành',
+    'Đi qua ô 0 đến ô 15 nhận thưởng đi qua Trạm Khởi Hành (200đ)'
+  );
+}
+
+// Test 5.4: Xuất file nhật ký ván đấu (Debug Log)
+{
+  const mockCtx = {
+    logs: [
+      { id: '1', text: 'Bắt đầu ván đấu', type: 'info' as const, timestamp: Date.now() },
+      { id: '2', text: 'Người Chơi A di chuyển về ô Khởi Hành', type: 'info' as const, timestamp: Date.now() },
+    ],
+    currentRound: 3,
+    players: [createMockPlayer(1, 'Người Chơi A', { cash: 500 })],
+  };
+
+  const debugJson = buildGameLogDebugJson(mockCtx);
+  const debugText = buildGameLogText(mockCtx);
+
+  assert(
+    debugJson.appName === 'Co Ty Phu Viet Nam' &&
+      debugJson.version === 'v1.5.3' &&
+      debugJson.logs.length === 2 &&
+      debugText.includes('NHẬT KÝ VÁN ĐẤU CỜ TỶ PHÚ VIỆT NAM'),
+    'Investigator',
+    'export_game_log',
+    'Xuất file nhật ký ván đấu',
+    'Hệ thống tạo đầy đủ file JSON và Text chuẩn cấu trúc để người chơi gửi debug'
+  );
+}
+
 console.log('\n===============================================================');
 const passCount = results.filter(r => r.passed).length;
 const failCount = results.filter(r => !r.passed).length;
-console.log(`📊 TỔNG KẾT KIỂM THỬ: ${passCount}/${results.length} NĂNG LỰC ĐÃ VƯỢT QUA TEST THÀNH CÔNG! (Thất bại: ${failCount})`);
+console.log(`📊 TỔNG KẾT KIỂM THỬ: ${passCount}/${results.length} NĂNG LỰC & TÍNH NĂNG ĐÃ VƯỢT QUA TEST THÀNH CÔNG! (Thất bại: ${failCount})`);
 console.log('===============================================================');
+

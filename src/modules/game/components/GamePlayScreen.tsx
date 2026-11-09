@@ -40,6 +40,7 @@ interface Props {
   onEndTurn: () => void;
   onOpenCheat?: () => void;
   hasActiveCheat?: boolean;
+  currentRound?: number;
   settings?: GameSettings;
   onUseGetOutOfJailCard?: () => void;
   investigator?: SpecialInvestigatorState;
@@ -49,6 +50,7 @@ export const GamePlayScreen: React.FC<Props> = ({
   players,
   activePlayer,
   turnIndex,
+  currentRound,
   tiles,
   consumableShop,
   permanentShop,
@@ -73,6 +75,14 @@ export const GamePlayScreen: React.FC<Props> = ({
   const [isPlayersDrawerOpen, setIsPlayersDrawerOpen] = useState(false);
   const [isLogDrawerOpen, setIsLogDrawerOpen] = useState(false);
 
+  const exportContext = {
+    currentRound,
+    players,
+    activePlayer,
+    investigator,
+    settings,
+  };
+
   const showDockedSides = Boolean(settings?.alwaysShowSidePanels);
 
   const invAbility = investigator?.currentAbilityId
@@ -87,6 +97,9 @@ export const GamePlayScreen: React.FC<Props> = ({
           <div className="flex items-center gap-1.5 font-bold text-xs text-amber-300">
             <span className="text-base">🕵️‍♂️</span>
             <span>ĐIỀU TRA VIÊN</span>
+            <span className="text-[9px] bg-amber-500/20 text-amber-200 px-1 py-0.2 rounded border border-amber-400/30 font-medium">
+              ↺ Ngược chiều
+            </span>
           </div>
           <span className="text-[9px] bg-amber-400/20 text-amber-300 px-1.5 py-0.5 rounded font-mono font-bold border border-amber-400/40">
             Vòng {investigator.lapsCompleted}
@@ -167,10 +180,10 @@ export const GamePlayScreen: React.FC<Props> = ({
         />
       </section>
 
-      {/* Optional Docked Right Panel: Game Live Log */}
+      {/* Optional Docked Right Panel: Game Live Log (Anchored to top to avoid notification overlap) */}
       {showDockedSides && (
-        <aside className="hidden lg:flex flex-col w-64 xl:w-72 max-h-[calc(100vh-60px)] shrink-0 animate-in fade-in duration-200">
-          <GameLog logs={logs} />
+        <aside className="hidden lg:flex flex-col w-64 xl:w-72 self-start pt-1.5 max-h-[calc(100vh-70px)] shrink-0 animate-in fade-in duration-200">
+          <GameLog logs={logs} exportContext={exportContext} className="h-[320px] xl:h-[360px] shadow-lg" />
         </aside>
       )}
 
@@ -210,7 +223,11 @@ export const GamePlayScreen: React.FC<Props> = ({
         icon="📜"
         widthClass="w-80 sm:w-96"
       >
-        <GameLog logs={logs} />
+        <GameLog
+          logs={logs}
+          exportContext={exportContext}
+          className="h-full flex-1 border-0 shadow-none rounded-none"
+        />
       </GameDrawer>
     </main>
   );

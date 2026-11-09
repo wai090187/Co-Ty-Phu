@@ -112,6 +112,7 @@ export default function App() {
           players={game.players}
           activePlayer={game.activePlayer!}
           turnIndex={game.turnIndex}
+          currentRound={game.currentRound}
           tiles={game.tiles}
           settings={game.settings}
           consumableShop={game.consumableShop}

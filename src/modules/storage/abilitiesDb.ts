@@ -123,7 +123,15 @@ export const loadChanceDeckDb = (): Card[] => {
     const raw = localStorage.getItem(CHANCE_DB_KEY);
     if (raw) {
       const parsed: Card[] = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map(c => {
+          if (c.id === 'ch-1') {
+            const def = INITIAL_CHANCE_CARDS.find(x => x.id === 'ch-1');
+            return def ? { ...c, description: def.description, title: def.title } : c;
+          }
+          return c;
+        });
+      }
     }
     // Fallback: Kiểm tra cấu hình mặc định toàn bộ của máy
     const fullDef = loadFullConfigUserDefault();
@@ -152,7 +160,15 @@ export const loadChestDeckDb = (): Card[] => {
     const raw = localStorage.getItem(CHEST_DB_KEY);
     if (raw) {
       const parsed: Card[] = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map(c => {
+          if (c.id === 'cs-10') {
+            const def = INITIAL_CHEST_CARDS.find(x => x.id === 'cs-10');
+            return def ? { ...c, description: def.description, title: def.title } : c;
+          }
+          return c;
+        });
+      }
     }
     // Fallback: Kiểm tra cấu hình mặc định toàn bộ của máy
     const fullDef = loadFullConfigUserDefault();

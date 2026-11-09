@@ -136,7 +136,17 @@ export function handleInvestigatorSpecialAbilities(
               p.position = targetPos;
               sounds.step();
               addLog(`🚶 ${p.name} dịch chuyển đến [${tiles[targetPos]?.name || targetPos}]!`, 'info');
-              if (targetPos === 0) {
+              const isNoBonusCard =
+                drawn.id === 'cs-10' ||
+                drawn.id === 'ch-1' ||
+                (targetPos === 0 && drawn.description?.includes('không nhận thưởng'));
+
+              if (isNoBonusCard) {
+                addLog(
+                  `🏁 [${drawn.title}] ${p.name} quay về Trạm Khởi Hành (không nhận thưởng khởi hành theo quy định thẻ bài).`,
+                  'info'
+                );
+              } else if (targetPos === 0) {
                 const bonus = settings.goExactBonus || 400;
                 p.cash += bonus;
                 triggerCashTransfer(0, [p.id], bonus, 'Trúng ô Khởi Hành');

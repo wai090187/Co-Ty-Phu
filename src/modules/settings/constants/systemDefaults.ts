@@ -21,7 +21,7 @@ export const SYSTEM_DEFAULT_SETTINGS: GameSettings = {
   bailMultiplierTurn1: 0,
   bailMultiplierTurn2: 2,
   bailMultiplierTurn3: 1,
-  vacantLandRentPercent: 20,
+  vacantLandRentPercent: 100,
   jailMode: 'investigation' as const,
   investigationIncomePenaltyPercent: 50,
   investigationFeePenaltyPercent: 50,

@@ -16,10 +16,16 @@ export const loadCachedSettings = (): GameSettings => {
     const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
+      if (parsed.vacantLandRentPercent === 20) {
+        parsed.vacantLandRentPercent = 100;
+      }
       return { ...DEFAULT_SETTINGS, ...parsed };
     }
     const userDef = loadUserDefaultSettings();
     if (userDef) {
+      if (userDef.vacantLandRentPercent === 20) {
+        userDef.vacantLandRentPercent = 100;
+      }
       return { ...DEFAULT_SETTINGS, ...userDef };
     }
   } catch (e) {

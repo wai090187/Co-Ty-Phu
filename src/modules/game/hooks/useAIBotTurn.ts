@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Player, Tile, ConsumableAbility, PermanentAbility, GameSettings } from '../../../types/game';
+import { filterAbilitiesForAI } from '../utils/abilityFilterHelper';
 
 interface AIContext {
   isPlaying: boolean;
@@ -129,11 +130,10 @@ export const useAIBotTurn = (ctx: AIContext) => {
       // 4. Station Ability
       else if (ctx.activeStationModal) {
         if (bot.consumableAbilities.length < 3) {
-          // Chỉ random các kỹ năng tự động kích hoạt cho AI
-          const autoAbilities = ctx.consumableShop.filter(
-            a => a.triggerCondition !== 'manual_anytime' && (a.quantity ?? 1) > 0
-          );
-          const candidatePool = autoAbilities.length > 0 ? autoAbilities : ctx.consumableShop.filter(a => (a.quantity ?? 1) > 0);
+          // Chỉ random các kỹ năng tự động kích hoạt cho AI, loại bỏ các năng lực tăng/giảm ô di chuyển
+          const candidatePool = filterAbilitiesForAI(ctx.consumableShop, {
+            requireAutoTrigger: true,
+          });
           const affordable = candidatePool.filter(a => bot.cash >= a.cost + 150);
           if (affordable.length > 0) {
             const chosen = affordable[Math.floor(Math.random() * affordable.length)];

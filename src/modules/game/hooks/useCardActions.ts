@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { Card, GameSettings, Player } from '../../../types/game';
 import { sounds } from '../../../utils/soundEngine';
+import { applyGoTileBonus } from '../utils/goBonusHelper';
 
 interface CardActionContext {
   activePlayer: Player | null;
@@ -80,9 +81,41 @@ export const useCardActions = (ctx: CardActionContext) => {
             break;
           }
           case 'move_to': {
+            const oldPos = p.position;
             const targetPos = card.targetTileId ?? 0;
             p.position = targetPos;
             sounds.step();
+
+            // Đối với các thẻ về Khởi Hành không nhận thưởng (cs-10, ch-1)
+            const isNoGoBonusCard =
+              card.id === 'cs-10' ||
+              card.id === 'ch-1' ||
+              (targetPos === 0 && card.description?.includes('không nhận thưởng'));
+
+            if (isNoGoBonusCard) {
+              ctx.addLog(
+                `🏁 [${card.title}] ${p.name} quay về Trạm Khởi Hành (không nhận thưởng khởi hành theo quy định thẻ bài).`,
+                'info'
+              );
+            } else if (targetPos === 0) {
+              applyGoTileBonus({
+                player: p,
+                isExact: true,
+                settings: ctx.settings,
+                triggerCashTransfer: ctx.triggerCashTransfer,
+                addLog: ctx.addLog,
+              });
+            } else if (targetPos < oldPos) {
+              // Đi qua Trạm Khởi Hành khi di chuyển tới ô phía trước
+              applyGoTileBonus({
+                player: p,
+                isExact: false,
+                settings: ctx.settings,
+                triggerCashTransfer: ctx.triggerCashTransfer,
+                addLog: ctx.addLog,
+              });
+            }
+
             setTimeout(() => {
               ctx.resolveTileLanding(p.id, targetPos, 0);
             }, 300);
@@ -90,13 +123,35 @@ export const useCardActions = (ctx: CardActionContext) => {
           }
           case 'move_relative': {
             const steps = card.value || 0;
-            const newPos = (p.position + steps + 40) % 40;
+            const oldPos = p.position;
+            const newPos = (oldPos + steps + 40) % 40;
             p.position = newPos;
             sounds.step();
             ctx.addLog(
               `🚶 [${card.title}] ${p.name} ${steps < 0 ? `lùi lại ${Math.abs(steps)} ô` : `tiến lên ${steps} ô`} đến ô số ${newPos}!`,
               'info'
             );
+
+            if (steps > 0) {
+              if (newPos === 0) {
+                applyGoTileBonus({
+                  player: p,
+                  isExact: true,
+                  settings: ctx.settings,
+                  triggerCashTransfer: ctx.triggerCashTransfer,
+                  addLog: ctx.addLog,
+                });
+              } else if (oldPos + steps >= 40) {
+                applyGoTileBonus({
+                  player: p,
+                  isExact: false,
+                  settings: ctx.settings,
+                  triggerCashTransfer: ctx.triggerCashTransfer,
+                  addLog: ctx.addLog,
+                });
+              }
+            }
+
             setTimeout(() => {
               ctx.resolveTileLanding(p.id, newPos, steps);
             }, 300);

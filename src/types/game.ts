@@ -192,7 +192,7 @@ export interface GameSettings {
   bailMultiplierTurn1: number;       // Hệ số nhân tiền bảo lãnh lượt 1 (0 = không được, >0 = nhân)
   bailMultiplierTurn2: number;       // Hệ số nhân tiền bảo lãnh lượt 2 (mặc định 2 = x2)
   bailMultiplierTurn3: number;       // Hệ số nhân tiền bảo lãnh lượt 3 (mặc định 1 = x1)
-  vacantLandRentPercent: number;     // % Số tiền thuế cho đất trống theo giá đất (mặc định 10%)
+  vacantLandRentPercent: number;     // % Số tiền thuế cho đất trống theo giá thuê gốc (mặc định 100%)
 
   // New Investigation (Bị công an điều tra) mode settings:
   jailMode: 'prison' | 'investigation'; // 'prison': Vào tù nhốt | 'investigation': Bị công an điều tra vì buôn bán nhà ở trái phép

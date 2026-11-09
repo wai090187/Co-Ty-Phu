@@ -7,6 +7,7 @@ import { Player, Tile, Card, PermanentAbility, ConsumableAbility } from '../../.
 import { sounds } from '../../../utils/soundEngine';
 import { INITIAL_CHANCE_CARDS, INITIAL_CHEST_CARDS } from '../../../data/cards';
 import { drawRandomCardWithReset } from './cardDeckHelper';
+import { filterAbilitiesForAI } from './abilityFilterHelper';
 
 export { handleSameTileAndNeighborToll } from './landingNeighborTollHelper';
 
@@ -110,10 +111,9 @@ export function handleCornerAndSpecialTiles(ctx: SpecialTilesContext) {
 
     sounds.purchase();
     const unowned = consumableShop.filter(a => (a.quantity ?? 1) > 0);
-    const pool = player.isAI
-      ? unowned.filter(a => a.triggerCondition !== 'manual_anytime')
+    const candidatePool = player.isAI
+      ? filterAbilitiesForAI(unowned, { requireAutoTrigger: true })
       : unowned;
-    const candidatePool = pool.length > 0 ? pool : unowned;
     const shuffled = [...candidatePool].sort(() => 0.5 - Math.random());
     setOfferedStationAbilities(shuffled.slice(0, 2));
     setActiveStationModal(tile);
