@@ -1,5 +1,12 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import React, { useEffect } from 'react';
 import { Tile, Player } from '../../types/game';
+import { PropertyDeedRates } from './property/PropertyDeedRates';
+import { PropertyUpgradeActions } from './property/PropertyUpgradeActions';
 
 interface Props {
   tile: Tile;
@@ -46,10 +53,8 @@ export const PropertyModal: React.FC<Props> = ({
   const canAffordHouse = activePlayer.cash >= houseCost;
   const canAffordBuy = activePlayer.cash >= (tile.price || 0);
 
-  // Keyboard shortcut listener for Space (action) and Escape (close)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept if user is typing in an input field
       const target = e.target as HTMLElement;
       if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA') return;
 
@@ -118,100 +123,32 @@ export const PropertyModal: React.FC<Props> = ({
         </div>
 
         {/* Deed Body */}
-        <div className="p-4 flex-1 flex flex-col gap-3 text-sm">
-          {/* Base Rent & House Rates */}
-          <div className="bg-white border border-slate-200 rounded-lg p-2.5 flex flex-col gap-1.5 shadow-xs">
-            <div className="flex justify-between font-bold text-slate-800 pb-1 border-b border-slate-100">
-              <span>Tiền thuê đất trống:</span>
-              <span className="font-mono text-emerald-700">{tile.rents?.[0] || 0} đ</span>
-            </div>
-            <div className="flex justify-between text-xs text-slate-600">
-              <span>Với 1 Căn Nhà:</span>
-              <span className="font-mono">{tile.rents?.[1]} đ</span>
-            </div>
-            <div className="flex justify-between text-xs text-slate-600">
-              <span>Với 2 Căn Nhà:</span>
-              <span className="font-mono">{tile.rents?.[2]} đ</span>
-            </div>
-            <div className="flex justify-between text-xs text-slate-600">
-              <span>Với 3 Căn Nhà:</span>
-              <span className="font-mono">{tile.rents?.[3]} đ</span>
-            </div>
-            <div className="flex justify-between text-xs text-slate-600">
-              <span>Với 4 Căn Nhà:</span>
-              <span className="font-mono">{tile.rents?.[4]} đ</span>
-            </div>
-            <div className="flex justify-between font-bold text-xs text-rose-700 pt-1 border-t border-slate-100">
-              <span>Với KHÁCH SẠN:</span>
-              <span className="font-mono">{tile.rents?.[5]} đ</span>
-            </div>
-          </div>
-
-          {/* Construction & Mortgage Info */}
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-center">
-              <span className="text-slate-500 block">Giá xây mỗi nhà</span>
-              <span className="font-bold text-slate-800">{houseCost} đ</span>
-            </div>
-            <div className="bg-slate-100 border border-slate-200 rounded-lg p-2 text-center">
-              <span className="text-slate-500 block">Giá thế chấp</span>
-              <span className="font-bold text-slate-800">{(tile.price || 0) / 2} đ</span>
-            </div>
-          </div>
-
-          {/* Status info */}
-          <div className="text-xs text-slate-600 flex flex-col gap-1">
-            <div className="flex justify-between">
-              <span>Chủ sở hữu:</span>
-              <span className="font-bold text-slate-800">
-                {owner ? `${owner.name} (${owner.id})` : 'Ngân hàng (Chưa có chủ)'}
-              </span>
-            </div>
-            {owner && (
-              <div className="flex justify-between">
-                <span>Hiện trạng:</span>
-                <span className="font-bold text-emerald-700">
-                  {currentHouses === 5
-                    ? 'Khách sạn hạng sang'
-                    : currentHouses > 0
-                    ? `${currentHouses} Nhà`
-                    : 'Đất trống'}
-                </span>
-              </div>
-            )}
-            {isMortgaged && (
-              <span className="text-red-600 font-bold">
-                ⚠️ Đất đang bị cầm cố cho Ngân Hàng (Không thu tiền thuê)
-              </span>
-            )}
-          </div>
-
-          {/* Landing Rent Notice */}
-          {isLandingAction && !isOwner && owner && !isMortgaged && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-2.5 text-center">
-              <span className="text-xs text-red-600 block">Bạn cần trả tiền thuê:</span>
-              <span className="text-xl font-black text-red-700 font-mono">{rentAmount} đ</span>
-              {rentBreakdown && (
-                <span className="text-[10px] text-slate-500 block mt-0.5">{rentBreakdown}</span>
-              )}
-            </div>
-          )}
-        </div>
+        <PropertyDeedRates
+          tile={tile}
+          owner={owner}
+          currentHouses={currentHouses}
+          isMortgaged={isMortgaged}
+          houseCost={houseCost}
+          isLandingAction={isLandingAction}
+          isOwner={isOwner}
+          rentAmount={rentAmount}
+          rentBreakdown={rentBreakdown}
+        />
 
         {/* Action Buttons */}
         <div className="p-3 bg-slate-100 border-t border-slate-200 flex flex-col gap-2">
-          {/* Action 1: Pay rent when landing on someone's property */}
           {isLandingAction && !isOwner && owner && !isMortgaged && onPayRent && (
             <button
               onClick={onPayRent}
               className="w-full py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-sm shadow flex items-center justify-center gap-2 transition-colors"
             >
               <span>Nộp Tiền Thuê ({rentAmount} đ)</span>
-              <kbd className="px-1.5 py-0.5 text-[10px] bg-white/25 rounded border border-white/40 font-mono">Space</kbd>
+              <kbd className="px-1.5 py-0.5 text-[10px] bg-white/25 rounded border border-white/40 font-mono">
+                Space
+              </kbd>
             </button>
           )}
 
-          {/* Action 2: Buy property if unowned */}
           {isLandingAction && isUnowned && onBuy && (
             <div className="flex gap-2">
               <button
@@ -225,7 +162,9 @@ export const PropertyModal: React.FC<Props> = ({
               >
                 <span>Mua Đất ({tile.price} đ)</span>
                 {canAffordBuy && (
-                  <kbd className="px-1.5 py-0.5 text-[10px] bg-white/25 rounded border border-white/40 font-mono">Space</kbd>
+                  <kbd className="px-1.5 py-0.5 text-[10px] bg-white/25 rounded border border-white/40 font-mono">
+                    Space
+                  </kbd>
                 )}
               </button>
               <button
@@ -233,71 +172,28 @@ export const PropertyModal: React.FC<Props> = ({
                 className="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-semibold text-sm flex items-center gap-1.5 transition-colors"
               >
                 <span>Bỏ Qua</span>
-                <kbd className="px-1.5 py-0.5 text-[10px] bg-slate-300 text-slate-700 rounded border border-slate-400 font-mono">Esc</kbd>
+                <kbd className="px-1.5 py-0.5 text-[10px] bg-slate-300 text-slate-700 rounded border border-slate-400 font-mono">
+                  Esc
+                </kbd>
               </button>
             </div>
           )}
 
-          {/* Action 3: Upgrade House (Requires landing on own tile after moving, or using consumable ability) */}
           {isOwner && currentHouses < 5 && (
-            <div className="flex flex-col gap-2">
-              {activePlayer.position === tile.id ? (
-                <div className="flex flex-col gap-1">
-                  {!hasMovedThisTurn ? (
-                    <div className="p-2 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-[11px] font-medium text-center">
-                      ⚠️ Bạn chỉ có thể nâng cấp sau khi đã tung xúc xắc và di chuyển xong trong lượt!
-                    </div>
-                  ) : upgradesThisTurn >= 1 ? (
-                    <div className="p-2 bg-slate-100 border border-slate-300 rounded-lg text-slate-600 text-[11px] font-medium text-center">
-                      ✅ Bạn đã nâng cấp 1 lần trong lượt này (Mỗi lượt chỉ được nâng cấp 1 lần).
-                    </div>
-                  ) : null}
-
-                  {onBuildHouse && (
-                    <button
-                      onClick={onBuildHouse}
-                      disabled={!canAffordHouse || !hasMovedThisTurn || upgradesThisTurn >= 1}
-                      className={`w-full py-2 px-4 rounded-lg font-bold text-sm shadow flex items-center justify-center gap-2 transition-colors ${
-                        canAffordHouse && hasMovedThisTurn && upgradesThisTurn === 0
-                          ? 'bg-amber-600 hover:bg-amber-700 text-white'
-                          : 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                      }`}
-                    >
-                      <span>
-                        {currentHouses === 4
-                          ? `Nâng Lên Khách Sạn (${houseCost} đ)`
-                          : `Xây Thêm 1 Nhà (${houseCost} đ)`}
-                      </span>
-                      {canAffordHouse && hasMovedThisTurn && upgradesThisTurn === 0 && (
-                        <kbd className="px-1.5 py-0.5 text-[10px] bg-white/25 rounded border border-white/40 font-mono">Space</kbd>
-                      )}
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="p-2 bg-slate-100 border border-slate-200 rounded-lg text-slate-600 text-[11px] text-center">
-                  📍 <span className="font-semibold">Luật chơi:</span> Cần dừng chân trên ô đất này sau khi di chuyển để nâng cấp nhà.
-                </div>
-              )}
-
-              {/* Consumable Ability Option: Giấy Phép Xây Dựng Đặc Cách */}
-              {activePlayer.consumableAbilities.includes('instant-upgrade-permit') && onBuildHouseWithAbility && (
-                <button
-                  onClick={() => onBuildHouseWithAbility('instant-upgrade-permit')}
-                  disabled={!canAffordHouse}
-                  className={`w-full py-2 px-3 rounded-lg font-bold text-xs shadow flex items-center justify-center gap-1.5 transition-colors ${
-                    canAffordHouse
-                      ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                      : 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                  }`}
-                >
-                  <span>⚡📜</span> Dùng [Giấy Phép Đặc Cách] Nâng Cấp ({houseCost} đ)
-                </button>
-              )}
-            </div>
+            <PropertyUpgradeActions
+              tile={tile}
+              activePlayer={activePlayer}
+              currentHouses={currentHouses}
+              houseCost={houseCost}
+              canAffordHouse={canAffordHouse}
+              hasMovedThisTurn={hasMovedThisTurn}
+              upgradesThisTurn={upgradesThisTurn}
+              onBuildHouse={onBuildHouse}
+              onBuildHouseWithAbility={onBuildHouseWithAbility}
+            />
           )}
 
-          {/* Action 4: Mortgage / Unmortgage */}
+          {/* Mortgage / Unmortgage */}
           {isOwner && (
             <div className="flex gap-2">
               {!isMortgaged && onMortgage && currentHouses === 0 && (
@@ -319,14 +215,15 @@ export const PropertyModal: React.FC<Props> = ({
             </div>
           )}
 
-          {/* Default Close button when not forced landing */}
           {!isLandingAction && (
             <button
               onClick={onClose}
               className="w-full py-2 px-4 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5"
             >
               <span>Đóng Lại</span>
-              <kbd className="px-1.5 py-0.5 text-[10px] bg-slate-300 text-slate-700 rounded border border-slate-400 font-mono">Esc</kbd>
+              <kbd className="px-1.5 py-0.5 text-[10px] bg-slate-300 text-slate-700 rounded border border-slate-400 font-mono">
+                Esc
+              </kbd>
             </button>
           )}
         </div>

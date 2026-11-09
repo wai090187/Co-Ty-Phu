@@ -13,7 +13,12 @@ import {
 } from './game';
 import { SetupPlayerConfig } from '../hooks/useMonopolyGame';
 
+export type { SetupPlayerConfig };
+export type PlayerConfig = SetupPlayerConfig;
+
 export interface SaveGameData {
+
+
   slotId: number; // 1, 2, or 3
   savedAt: number; // timestamp
   title: string;

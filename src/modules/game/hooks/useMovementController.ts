@@ -1,7 +1,13 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { useCallback } from 'react';
 import { Player } from '../../../types/game';
 import { sounds } from '../../../utils/soundEngine';
-import { getBaseBailFee } from '../../property/utils/rentCalculator';
+import { handleJailRollResolution } from '../utils/jailRollHelper';
+import { applyGoTileBonus } from '../utils/goBonusHelper';
 
 interface MovementContext {
   activePlayer: Player | null;
@@ -69,27 +75,13 @@ export const useMovementController = (ctx: MovementContext) => {
             sounds.step();
 
             if (newPos === 0) {
-              if (isFinalStep) {
-                let exactBonus = ctx.settings.goExactBonus ?? 400;
-                if (ctx.settings.jailMode === 'investigation' && p.inJail) {
-                  const red = Math.round(exactBonus * (ctx.settings.investigationIncomePenaltyPercent / 100));
-                  exactBonus = Math.max(0, exactBonus - red);
-                  ctx.addLog(`📉 [Đang Bị Điều Tra] ${p.name} bị trừ tiền thưởng dừng Trạm Khởi Hành (-${red}đ)`, 'jail');
-                }
-                p.cash += exactBonus;
-                ctx.triggerCashTransfer(0, [p.id], exactBonus, 'Thưởng dừng trúng ô Khởi Hành');
-                ctx.addLog(`🎉 ${p.name} dừng TRÚNG Ô [Trạm khởi hành] nhận thưởng ${exactBonus}đ!`, 'money');
-              } else {
-                let passBonus = ctx.settings.goPassBonus ?? 200;
-                if (ctx.settings.jailMode === 'investigation' && p.inJail) {
-                  const red = Math.round(passBonus * (ctx.settings.investigationIncomePenaltyPercent / 100));
-                  passBonus = Math.max(0, passBonus - red);
-                  ctx.addLog(`📉 [Đang Bị Điều Tra] ${p.name} bị trừ tiền thưởng đi qua Trạm Khởi Hành (-${red}đ)`, 'jail');
-                }
-                p.cash += passBonus;
-                ctx.triggerCashTransfer(0, [p.id], passBonus, 'Thưởng đi qua ô Khởi Hành');
-                ctx.addLog(`🎁 ${p.name} đi QUA [Trạm khởi hành] nhận thưởng ${passBonus}đ`, 'money');
-              }
+              applyGoTileBonus({
+                player: p,
+                isExact: isFinalStep,
+                settings: ctx.settings,
+                triggerCashTransfer: ctx.triggerCashTransfer,
+                addLog: ctx.addLog,
+              });
             }
 
             return { ...p, position: newPos };
@@ -124,23 +116,21 @@ export const useMovementController = (ctx: MovementContext) => {
         const passedGo = oldPos + stepsToJump >= 40;
 
         if (newPos === 0) {
-          let exactBonus = ctx.settings.goExactBonus ?? 400;
-          if (ctx.settings.jailMode === 'investigation' && p.inJail) {
-            const red = Math.round(exactBonus * (ctx.settings.investigationIncomePenaltyPercent / 100));
-            exactBonus = Math.max(0, exactBonus - red);
-          }
-          p.cash += exactBonus;
-          ctx.triggerCashTransfer(0, [p.id], exactBonus, 'Thưởng dừng trúng ô Khởi Hành');
-          ctx.addLog(`🎉 ${p.name} dừng TRÚNG Ô [Trạm khởi hành] (+${exactBonus}đ)`, 'money');
+          applyGoTileBonus({
+            player: p,
+            isExact: true,
+            settings: ctx.settings,
+            triggerCashTransfer: ctx.triggerCashTransfer,
+            addLog: ctx.addLog,
+          });
         } else if (passedGo) {
-          let passBonus = ctx.settings.goPassBonus ?? 200;
-          if (ctx.settings.jailMode === 'investigation' && p.inJail) {
-            const red = Math.round(passBonus * (ctx.settings.investigationIncomePenaltyPercent / 100));
-            passBonus = Math.max(0, passBonus - red);
-          }
-          p.cash += passBonus;
-          ctx.triggerCashTransfer(0, [p.id], passBonus, 'Thưởng đi qua ô Khởi Hành');
-          ctx.addLog(`🎁 ${p.name} đi qua [Trạm khởi hành] (+${passBonus}đ)`, 'money');
+          applyGoTileBonus({
+            player: p,
+            isExact: false,
+            settings: ctx.settings,
+            triggerCashTransfer: ctx.triggerCashTransfer,
+            addLog: ctx.addLog,
+          });
         }
         return { ...p, position: newPos };
       });
@@ -156,7 +146,13 @@ export const useMovementController = (ctx: MovementContext) => {
   }, [ctx]);
 
   const rollDice = useCallback(() => {
-    if (!ctx.activePlayer || !ctx.canRoll || ctx.isRolling || ctx.isMovingStepByStep || ctx.activePlayer.bankrupt)
+    if (
+      !ctx.activePlayer ||
+      !ctx.canRoll ||
+      ctx.isRolling ||
+      ctx.isMovingStepByStep ||
+      ctx.activePlayer.bankrupt
+    )
       return;
 
     ctx.setIsRolling(true);
@@ -179,7 +175,12 @@ export const useMovementController = (ctx: MovementContext) => {
 
     if (ctx.pendingDiceBoost !== 0) {
       total = Math.max(1, total + ctx.pendingDiceBoost);
-      ctx.addLog(`⚡ Gia tốc xúc xắc tác dụng: ${ctx.pendingDiceBoost > 0 ? '+' : ''}${ctx.pendingDiceBoost} bước!`, 'ability');
+      ctx.addLog(
+        `⚡ Gia tốc xúc xắc tác dụng: ${ctx.pendingDiceBoost > 0 ? '+' : ''}${
+          ctx.pendingDiceBoost
+        } bước!`,
+        'ability'
+      );
       ctx.setPendingDiceBoost(0);
     }
 
@@ -191,102 +192,27 @@ export const useMovementController = (ctx: MovementContext) => {
       if (!player) return;
 
       ctx.setIsRolling(false);
-      ctx.addLog(`🎲 ${player.name} tung được [${d1}][${d2}] (Tổng: ${total})${isDouble ? ' - LƯỢT ĐÔI!' : ''}`);
+      ctx.addLog(
+        `🎲 ${player.name} tung được [${d1}][${d2}] (Tổng: ${total})${
+          isDouble ? ' - LƯỢT ĐÔI!' : ''
+        }`
+      );
 
       if (player.inJail) {
-        const isInvestigation = ctx.settings.jailMode === 'investigation';
-
-        // 1. Thẻ ra tù miễn phí
-        if ((player.getOutOfJailCards || 0) > 0) {
-          player.getOutOfJailCards = (player.getOutOfJailCards || 0) - 1;
-          player.inJail = false;
-          player.jailTurns = 0;
-          sounds.ability();
-          const remainingCards = player.getOutOfJailCards;
-          ctx.addLog(
-            isInvestigation
-              ? `🕊️ [Dùng Thẻ Ra Tù] ${player.name} đã sử dụng Thẻ Ra Tù Miễn Phí để thoát khỏi diện điều tra thành công! (Không mất tiền, còn lại: ${remainingCards} thẻ)`
-              : `🕊️ [Dùng Thẻ Ra Tù] ${player.name} đã sử dụng Thẻ Ra Tù Miễn Phí để ra tù thành công! (Không mất tiền, còn lại: ${remainingCards} thẻ)`,
-            'jail'
-          );
-          movePlayerSteps(player.id, total);
-          return;
-        }
-
-        // 2. Tung ra số đôi
-        if (isDouble) {
-          sounds.ability();
-          player.inJail = false;
-          player.jailTurns = 0;
-          ctx.addLog(
-            isInvestigation
-              ? `✨ [Ra Tù Thành Công] ${player.name} tung được số đôi [${d1}][${d2}] - Thoát khỏi diện điều tra thành công miễn phí (không mất tiền)!`
-              : `✨ [Ra Tù Thành Công] ${player.name} tung được số đôi [${d1}][${d2}] - Ra tù thành công miễn phí (không mất tiền)!`,
-            'jail'
-          );
-          movePlayerSteps(player.id, total);
-          return;
-        } else {
-          // 3. Không tung được đôi -> thất bại
-          player.jailTurns += 1;
-
-          // Sau 3 lượt tung xúc xắc thất bại:
-          if (player.jailTurns >= 3) {
-            if (isInvestigation) {
-              // Chế độ công an điều tra: Thả tự do sau 3 lượt tung thất bại (không cho phép bảo lãnh, không mất tiền)
-              player.inJail = false;
-              player.jailTurns = 0;
-              sounds.ability();
-              ctx.addLog(
-                `🏛️ [Thả Tự Do Thành Công] ${player.name} sau 3 lượt tung xúc xắc thất bại đã chấp hành đủ thời gian điều tra và chính thức được cơ quan điều tra thả tự do! (Không mất tiền)`,
-                'jail'
-              );
-              movePlayerSteps(player.id, total);
-              return;
-            } else {
-              // Chế độ tù thường (Prison): Nộp bảo lãnh để ra tù hoặc phá sản
-              const baseFee = getBaseBailFee(ctx.currentRound, ctx.settings);
-              if (player.cash >= baseFee) {
-                player.cash -= baseFee;
-                player.inJail = false;
-                player.jailTurns = 0;
-                sounds.cash();
-                ctx.triggerCashTransfer(player.id, [], baseFee, 'Phí bảo lãnh ra tù sau 3 lượt');
-                ctx.addLog(
-                  `🏛️ [Bảo Lãnh Ra Tù Thành Công] ${player.name} sau 3 lượt ở tù đã chi trả ${baseFee}đ tiền bảo lãnh để ra tù thành công!`,
-                  'jail'
-                );
-                movePlayerSteps(player.id, total);
-                return;
-              } else {
-                ctx.addLog(
-                  `❌ [Ra Tù Thất Bại] ${player.name} sau 3 lượt ở tù không đủ ${baseFee}đ nộp tiền bảo lãnh và bị tuyên bố phá sản!`,
-                  'jail'
-                );
-                ctx.handleBankrupt(player);
-                return;
-              }
-            }
-          }
-
-          // Lượt 1 hoặc 2 thất bại (chưa đủ 3 lượt):
-          if (isInvestigation) {
-            // Chế độ công an điều tra: Vẫn cho phép người chơi di chuyển nhưng vẫn bị hình phạt điều tra
-            ctx.addLog(
-              `🚨 [Đang Bị Điều Tra] ${player.name} tung [${d1}][${d2}] (không phải số đôi) - Vẫn được di chuyển ${total} bước nhưng tiếp tục chịu hình phạt điều tra (giảm 50% thu nhập, tăng 50% chi phí)! (Lượt điều tra: ${player.jailTurns}/3)`,
-              'jail'
-            );
-            movePlayerSteps(player.id, total);
-            return;
-          } else {
-            // Chế độ tù thường: Bị nhốt lại, không được di chuyển
-            ctx.addLog(
-              `🔒 [Ra Tù Thất Bại] ${player.name} tung [${d1}][${d2}] (không phải số đôi) - Ra tù thất bại! (Lượt ở tù: ${player.jailTurns}/3)`,
-              'jail'
-            );
-            return;
-          }
-        }
+        handleJailRollResolution({
+          player,
+          isDouble,
+          d1,
+          d2,
+          total,
+          settings: ctx.settings,
+          currentRound: ctx.currentRound,
+          addLog: ctx.addLog,
+          triggerCashTransfer: ctx.triggerCashTransfer,
+          handleBankrupt: ctx.handleBankrupt,
+          movePlayerSteps,
+        });
+        return;
       }
 
       if (isDouble) {

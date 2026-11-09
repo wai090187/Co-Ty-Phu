@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { Player, GameSettings, SpecialInvestigatorState } from '../../../types/game';
 import { SetupPlayerConfig } from './useGameState';
 import { DEFAULT_PLAYER_COLORS } from '../constants/defaultSetup';
+import { pickNextInvestigatorAbility } from '../../../data/investigatorAbilities';
 
 interface TurnManagerContext {
   turnIndex: number;
@@ -65,8 +66,8 @@ export const useTurnManager = (ctx: TurnManagerContext) => {
           active: false,
           position: 0,
           lapsCompleted: 0,
-          currentAbilityId: 'inv_compensate_neighbor',
-          usedAbilityIds: ['inv_compensate_neighbor'],
+          currentAbilityId: '',
+          usedAbilityIds: [],
         });
       }
       if (ctx.setIsInvestigatorTurn) {
@@ -109,11 +110,18 @@ export const useTurnManager = (ctx: TurnManagerContext) => {
           if (ctx.setInvestigator) {
             ctx.setInvestigator(prevInv => {
               if (!prevInv.active) {
+                const initialPick = pickNextInvestigatorAbility(prevInv.usedAbilityIds || []);
                 ctx.addLog(
-                  `🕵️‍♂️ [ĐIỀU TRA VIÊN XUẤT HIỆN] Vòng ${nextRound}: Điều Tra Viên đặc biệt chính thức vào cuộc và bắt đầu tuần tra bàn cờ!`,
+                  `🕵️‍♂️ [ĐIỀU TRA VIÊN XUẤT HIỆN] Vòng ${nextRound}: Điều Tra Viên đặc biệt chính thức vào cuộc và kích hoạt năng lực ngẫu nhiên: [${initialPick.ability.name}] - ${initialPick.ability.shortDesc}!`,
                   'jail'
                 );
-                return { ...prevInv, active: true, position: 0 };
+                return {
+                  ...prevInv,
+                  active: true,
+                  position: 0,
+                  currentAbilityId: initialPick.ability.id,
+                  usedAbilityIds: initialPick.nextUsedIds,
+                };
               }
               return prevInv;
             });

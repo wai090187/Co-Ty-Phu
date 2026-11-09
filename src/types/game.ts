@@ -84,10 +84,13 @@ export type AbilityTargetScope =
   | 'target_choose_1'         // Lựa chọn 1 người chơi
   | 'target_choose_2'         // Lựa chọn 2 người chơi
   | 'target_all_players'      // Tất cả người chơi
+  | 'target_all_opponents'    // Tất cả đối thủ
+  | 'all_opponents'           // Toàn bộ đối thủ
   | 'target_adjacent_turns'   // Người chơi có số thứ tự lượt tung xúc xắc trước và sau bạn
   | 'target_richest'          // Người chơi giàu nhất
   | 'target_poorest'          // Người chơi nghèo nhất
   | 'target_bank';            // Ngân hàng
+
 
 export interface ConsumableAbility {
   id: string;

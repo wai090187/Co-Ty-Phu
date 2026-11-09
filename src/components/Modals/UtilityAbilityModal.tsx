@@ -1,10 +1,17 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import React, { useState, useEffect } from 'react';
 import { PermanentAbility, Player, Tile } from '../../types/game';
+import { UtilityTradeInDialog } from './utility/UtilityTradeInDialog';
+import { UtilityOfferedAbilitiesSection } from './utility/UtilityOfferedAbilitiesSection';
 
 interface Props {
   tile: Tile;
   player: Player;
-  abilities: PermanentAbility[]; // The 2 randomly offered unowned abilities
+  abilities: PermanentAbility[];
   allPermanents: PermanentAbility[];
   onBuyAbility: (ability: PermanentAbility, replaceAbilityId?: string) => void;
   onSellAbility: (ability: PermanentAbility) => void;
@@ -33,7 +40,6 @@ export const UtilityAbilityModal: React.FC<Props> = ({
 
   const handleAttemptBuy = (ability: PermanentAbility) => {
     if (ownedAbilities.length > 0) {
-      // Must trade-in 1st ability
       const old = ownedAbilities[0];
       const refund = Math.round(old.cost * 0.5);
       const netCost = ability.cost - refund;
@@ -49,7 +55,6 @@ export const UtilityAbilityModal: React.FC<Props> = ({
     }
   };
 
-  // Keyboard navigation: ArrowUp/ArrowDown to select, Space to buy, Escape to close
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -105,7 +110,16 @@ export const UtilityAbilityModal: React.FC<Props> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [abilities, selectedIndex, selectedAbility, player.cash, ownedAbilities, confirmTradeIn, onBuyAbility, onClose]);
+  }, [
+    abilities,
+    selectedIndex,
+    selectedAbility,
+    player.cash,
+    ownedAbilities,
+    confirmTradeIn,
+    onBuyAbility,
+    onClose,
+  ]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
@@ -146,86 +160,15 @@ export const UtilityAbilityModal: React.FC<Props> = ({
 
         {/* Content Body */}
         <div className="p-4 overflow-y-auto flex-1 flex flex-col gap-4">
-          {/* Section 1: 2 Random Offered Abilities for Purchase */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-black text-slate-900 uppercase tracking-wide flex items-center gap-1">
-                <span>🎁</span> Mở Bán Độc Quyền Lượt Này ({abilities.length}/2):
-              </span>
-              <span className="text-[10px] text-amber-800 font-bold bg-amber-100 px-2 py-0.5 rounded">
-                Chưa có ai sở hữu
-              </span>
-            </div>
+          <UtilityOfferedAbilitiesSection
+            abilities={abilities}
+            ownedAbilities={ownedAbilities}
+            player={player}
+            selectedIndex={selectedIndex}
+            setSelectedIndex={setSelectedIndex}
+            onAttemptBuy={handleAttemptBuy}
+          />
 
-            {abilities.length === 0 ? (
-              <div className="text-center py-6 bg-slate-100 border border-dashed border-slate-300 rounded-xl text-slate-500 text-xs">
-                Hiện tại tất cả năng lực đặc biệt đã có người khác sở hữu độc quyền hoặc hết hàng!
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2.5">
-                {abilities.map((ab, idx) => {
-                  const tradeInRefund = ownedAbilities.length > 0 ? Math.round(ownedAbilities[0].cost * 0.5) : 0;
-                  const netRequired = ownedAbilities.length > 0 ? ab.cost - tradeInRefund : ab.cost;
-                  const canAfford = player.cash >= netRequired;
-                  const isSelected = selectedIndex === idx;
-
-                  return (
-                    <div
-                      key={ab.id}
-                      onClick={() => setSelectedIndex(idx)}
-                      className={`p-3.5 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between gap-3 shadow-xs relative ${
-                        isSelected
-                          ? 'border-amber-600 bg-amber-50/90 ring-3 ring-amber-400 scale-[1.01]'
-                          : 'border-amber-300 bg-amber-50/50 hover:border-amber-400'
-                      }`}
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-sm text-slate-900">{ab.name}</span>
-                          <span className="text-xs font-mono font-black text-amber-900 bg-amber-200 px-2 py-0.5 rounded">
-                            {ab.cost} đ
-                          </span>
-                          {ownedAbilities.length > 0 && (
-                            <span className="text-[10px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.2 rounded border border-amber-300">
-                              Đổi bù: {netRequired >= 0 ? `${netRequired}đ` : `+${Math.abs(netRequired)}đ`}
-                            </span>
-                          )}
-                          <span className="text-[9.5px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300">
-                            Chưa có chủ
-                          </span>
-                          {isSelected && (
-                            <span className="text-[9.5px] font-black text-amber-900 bg-amber-200 px-1.5 py-0.2 rounded border border-amber-400 flex items-center gap-1">
-                              <span>👉</span> Đang chọn (↑ / ↓)
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-slate-700 mt-1">{ab.description}</p>
-                      </div>
-
-                      <button
-                        onClick={() => handleAttemptBuy(ab)}
-                        disabled={!canAfford}
-                        className={`px-3.5 py-2 rounded-lg text-xs font-bold shrink-0 flex items-center gap-1.5 transition-colors ${
-                          canAfford
-                            ? isSelected
-                              ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-md ring-2 ring-amber-300'
-                              : 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm'
-                            : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                        }`}
-                      >
-                        <span>{canAfford ? (ownedAbilities.length > 0 ? 'Đổi Mới' : 'Mua Ngay') : 'Hết Tiền'}</span>
-                        {canAfford && isSelected && (
-                          <kbd className="px-1.5 py-0.2 text-[9px] bg-white/25 rounded border border-white/40 font-mono">Space</kbd>
-                        )}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Section 2: Abilities Already Owned by Current Player (Option to sell) */}
           {ownedAbilities.length > 0 && (
             <div className="pt-2 border-t border-slate-200">
               <span className="text-xs font-black text-slate-900 uppercase tracking-wide block mb-2">
@@ -263,7 +206,7 @@ export const UtilityAbilityModal: React.FC<Props> = ({
           )}
         </div>
 
-        {/* Footer Actions & Keyboard Navigation Hint */}
+        {/* Footer */}
         <div className="p-3 bg-slate-100 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="text-[11px] text-slate-600 font-medium flex items-center gap-1.5">
             <span className="text-amber-800 font-bold">⌨️ Phím tắt:</span>
@@ -280,69 +223,23 @@ export const UtilityAbilityModal: React.FC<Props> = ({
               className="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg font-bold text-xs flex items-center gap-1.5"
             >
               <span>Đóng Lại</span>
-              <kbd className="px-1.5 py-0.2 text-[10px] bg-slate-300 rounded border border-slate-400 font-mono">Esc</kbd>
+              <kbd className="px-1.5 py-0.2 text-[10px] bg-slate-300 text-slate-700 rounded border border-slate-400 font-mono">
+                Esc
+              </kbd>
             </button>
           </div>
         </div>
 
-        {/* Confirmation Dialog for Replacing 1st Permanent Ability */}
         {confirmTradeIn && (
-          <div className="absolute inset-0 z-30 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
-            <div className="w-full max-w-sm bg-white rounded-2xl border-2 border-amber-600 shadow-2xl p-5 flex flex-col gap-3.5 text-slate-800">
-              <div className="flex items-center gap-2 text-amber-700">
-                <span className="text-2xl">⚠️</span>
-                <h3 className="font-display font-black text-sm uppercase">Xác Nhận Đổi Năng Lực Vĩnh Viễn</h3>
-              </div>
-              <p className="text-xs text-slate-600">
-                Mỗi người chỉ có thể giữ <b>1 Năng Lực Vĩnh Viễn</b>. Bạn có muốn bán năng lực cũ để lấy năng lực mới không?
-              </p>
-              <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs flex flex-col gap-1.5">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Năng lực cũ:</span>
-                  <span className="font-bold text-rose-700 line-through">{confirmTradeIn.oldAbility.name}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Giá hoàn lại (50%):</span>
-                  <span className="font-bold text-emerald-700">+{confirmTradeIn.refund}đ</span>
-                </div>
-                <div className="flex justify-between items-center pt-1 border-t border-amber-200">
-                  <span className="text-slate-500">Năng lực mới:</span>
-                  <span className="font-bold text-amber-900">{confirmTradeIn.newAbility.name} ({confirmTradeIn.newAbility.cost}đ)</span>
-                </div>
-                <div className="flex justify-between items-center text-sm font-bold text-slate-900 pt-1 border-t border-amber-200">
-                  <span>{confirmTradeIn.netCost >= 0 ? 'Cần bù thêm:' : 'Được thối lại:'}</span>
-                  <span className={confirmTradeIn.netCost >= 0 ? 'text-amber-700 font-mono' : 'text-emerald-700 font-mono'}>
-                    {confirmTradeIn.netCost >= 0 ? `${confirmTradeIn.netCost}đ` : `+${Math.abs(confirmTradeIn.netCost)}đ`}
-                  </span>
-                </div>
-              </div>
-              <div className="text-[11px] text-slate-500">
-                Tiền mặt hiện tại: <b className="text-slate-800 font-mono">{player.cash}đ</b>
-                {confirmTradeIn.netCost > player.cash && (
-                  <span className="text-rose-600 font-bold block mt-0.5">⚠️ Bạn không đủ tiền mặt để bù chênh lệch!</span>
-                )}
-              </div>
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200">
-                <button
-                  onClick={() => setConfirmTradeIn(null)}
-                  className="px-3.5 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs"
-                >
-                  Hủy Bỏ (Esc)
-                </button>
-                <button
-                  disabled={confirmTradeIn.netCost > player.cash}
-                  onClick={() => {
-                    onBuyAbility(confirmTradeIn.newAbility, confirmTradeIn.oldAbility.id);
-                    onClose();
-                  }}
-                  className="px-4 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-bold text-xs shadow-md flex items-center gap-1.5"
-                >
-                  <span>Xác Nhận Đổi</span>
-                  <kbd className="px-1 py-0.2 bg-white/20 text-[9px] rounded font-mono">Space</kbd>
-                </button>
-              </div>
-            </div>
-          </div>
+          <UtilityTradeInDialog
+            confirmTradeIn={confirmTradeIn}
+            player={player}
+            onConfirm={() => {
+              onBuyAbility(confirmTradeIn.newAbility, confirmTradeIn.oldAbility.id);
+              onClose();
+            }}
+            onCancel={() => setConfirmTradeIn(null)}
+          />
         )}
       </div>
     </div>

@@ -1,3 +1,8 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { useEffect, useCallback } from 'react';
 import { Player, Tile } from '../types/game';
 import { sounds } from '../utils/soundEngine';
@@ -14,9 +19,10 @@ import { useMovementController } from '../modules/game/hooks/useMovementControll
 import { usePropertyActions } from '../modules/game/hooks/usePropertyActions';
 import { useAbilityShopActions } from '../modules/game/hooks/useAbilityShopActions';
 import { useCardActions } from '../modules/game/hooks/useCardActions';
-import { useAIBotTurn } from '../modules/game/hooks/useAIBotTurn';
-import { useInvestigatorTurn } from '../modules/game/hooks/useInvestigatorTurn';
-import { applyLoadedGameState, extractCurrentSaveState } from '../modules/game/utils/saveStateHelper';
+import { useCheatActions } from '../modules/game/hooks/useCheatActions';
+import { useGameAutonomousLoops } from '../modules/game/hooks/useGameAutonomousLoops';
+import { useGamePersistenceActions } from '../modules/game/hooks/useGamePersistenceActions';
+import { useOutOfJailAction } from '../modules/game/hooks/useOutOfJailAction';
 
 export type { SetupPlayerConfig };
 
@@ -216,416 +222,33 @@ export const useMonopolyGame = () => {
     closeAllModals,
   });
 
-  // Hook 6: AI Bot Loop
-  useAIBotTurn({
-    isPlaying: state.isPlaying,
-    settings: state.settings,
+  // Background AI & Investigator loops
+  useGameAutonomousLoops({
+    state,
     activePlayer,
-    winner: state.winner,
-    isMovingStepByStep: state.isMovingStepByStep,
-    activeAbilityNotification: state.activeAbilityNotification,
-    aiActionModalInfo: state.aiActionModalInfo,
-    canRoll: state.canRoll,
-    activePropertyModalTile: state.activePropertyModalTile,
-    isLandingPropertyAction: state.isLandingPropertyAction,
-    activeStationModal: state.activeStationModal,
-    activeUtilityModal: state.activeUtilityModal,
-    activeDrawnCard: state.activeDrawnCard,
-    players: state.players,
-    consumableShop: state.consumableShop,
-    permanentShop: state.permanentShop,
     canPlayerPayBail,
     payBail,
     rollDice,
     buyProperty,
     buildHouse,
-    setActivePropertyModalTile: state.setActivePropertyModalTile,
-    setIsLandingPropertyAction: state.setIsLandingPropertyAction,
     buyConsumableAbility,
     buyPermanentAbility,
-    setActiveStationModal: state.setActiveStationModal,
-    setActiveUtilityModal: state.setActiveUtilityModal,
-    setAiActionModalInfo: state.setAiActionModalInfo,
     useConsumableAbility,
     endTurn,
-  });
-
-  // Hook 7: Special Investigator Autonomous Loop
-  useInvestigatorTurn({
-    settings: state.settings,
-    currentRound: state.currentRound,
-    tiles: state.tiles,
-    players: state.players,
-    chanceDeck: state.chanceDeck,
-    chestDeck: state.chestDeck,
-    investigator: state.investigator,
-    setInvestigator: state.setInvestigator,
-    isInvestigatorTurn: state.isInvestigatorTurn,
-    setIsInvestigatorTurn: state.setIsInvestigatorTurn,
-    isInvestigatorMoving: state.isInvestigatorMoving,
-    setIsInvestigatorMoving: state.setIsInvestigatorMoving,
-    setPlayers: state.setPlayers,
-    addLog: state.addLog,
     triggerCashTransfer,
-    setAiActionModalInfo: state.setAiActionModalInfo,
-    setActiveDrawnCard: state.setActiveDrawnCard,
-    setDice: state.setDice,
-    onInvestigatorTurnComplete: () => {
-      state.setCanRoll(true);
-      state.setHasMovedThisTurn(false);
-    },
   });
 
-  // Hook 8: Double roll extra turn auto-grant effect
-  useEffect(() => {
-    if (
-      state.hasPendingExtraRoll &&
-      !state.isRolling &&
-      !state.isMovingStepByStep &&
-      !state.activePropertyModalTile &&
-      !state.activeStationModal &&
-      !state.activeUtilityModal &&
-      !state.activeDrawnCard &&
-      !state.activeAbilityNotification &&
-      !state.aiActionModalInfo &&
-      !state.isInvestigatorTurn &&
-      !state.isInvestigatorMoving &&
-      activePlayer &&
-      !activePlayer.inJail &&
-      !activePlayer.bankrupt
-    ) {
-      const timer = setTimeout(() => {
-        state.setHasPendingExtraRoll(false);
-        state.setCanRoll(true);
-        state.setHasMovedThisTurn(false);
-        state.addLog(
-          `🎲✨ [Lượt Tung Tiếp] ${activePlayer.name} vừa tung được xúc xắc đôi, được tiếp tục tung xúc xắc!`,
-          'ability'
-        );
-      }, 350);
-      return () => clearTimeout(timer);
-    }
-  }, [
-    state.hasPendingExtraRoll,
-    state.isRolling,
-    state.isMovingStepByStep,
-    state.activePropertyModalTile,
-    state.activeStationModal,
-    state.activeUtilityModal,
-    state.activeDrawnCard,
-    state.activeAbilityNotification,
-    state.aiActionModalInfo,
-    state.isInvestigatorTurn,
-    state.isInvestigatorMoving,
-    activePlayer,
-    state,
-  ]);
+  const persistence = useGamePersistenceActions({ state });
+  const { useGetOutOfJailCard } = useOutOfJailAction({ state, activePlayer, triggerCharacterEvent });
 
-  const updateCardQuantity = (cardId: string, quantity: number) => {
-    state.setChanceDeck(prev => prev.map(c => (c.id === cardId ? { ...c, quantity } : c)));
-    state.setChestDeck(prev => prev.map(c => (c.id === cardId ? { ...c, quantity } : c)));
-  };
-
-  const updateConsumableQuantity = (abilityId: string, quantity: number) => {
-    state.setConsumableShop(prev => prev.map(a => (a.id === abilityId ? { ...a, quantity } : a)));
-  };
-
-  const updatePermanentQuantity = (abilityId: string, quantity: number) => {
-    state.setPermanentShop(prev => prev.map(a => (a.id === abilityId ? { ...a, quantity } : a)));
-  };
-
-  const loadSavedGame = useCallback((save: any) => {
-    applyLoadedGameState(state, save);
-  }, [state]);
-
-  const getCurrentSaveState = useCallback((configs: SetupPlayerConfig[]) => {
-    return extractCurrentSaveState(state, configs);
-  }, [state]);
-
-  // Use Free Jail Card
-  const useGetOutOfJailCard = useCallback((playerId?: number) => {
-    const targetId = playerId ?? activePlayer?.id;
-    if (!targetId) return;
-
-    sounds.ability();
-    state.setPlayers(prev =>
-      prev.map(p => {
-        if (p.id === targetId && p.getOutOfJailCards > 0 && p.inJail) {
-          return {
-            ...p,
-            inJail: false,
-            jailTurns: 0,
-            getOutOfJailCards: p.getOutOfJailCards - 1,
-          };
-        }
-        return p;
-      })
-    );
-
-    const p = state.players.find(x => x.id === targetId);
-    if (p && p.getOutOfJailCards > 0 && p.inJail) {
-      const remainingCards = p.getOutOfJailCards - 1;
-      const isInv = state.settings.jailMode === 'investigation';
-      const msg = isInv
-        ? `🕊️ [Dùng Thẻ Ra Tù] ${p.name} đã sử dụng Thẻ Ra Tù Miễn Phí để thoát khỏi diện điều tra thành công! (Không mất tiền, còn lại: ${remainingCards} thẻ)`
-        : `🕊️ [Dùng Thẻ Ra Tù] ${p.name} đã sử dụng Thẻ Ra Tù Miễn Phí để ra tù thành công! (Không mất tiền, còn lại: ${remainingCards} thẻ)`;
-      state.addLog(msg, 'jail');
-      triggerCharacterEvent(
-        p.id,
-        'cleared_investigation',
-        'happy',
-        'Dùng Thẻ Ra Tù',
-        msg
-      );
-    }
-  }, [activePlayer, state, triggerCharacterEvent]);
-
-  // Cheat Mode Methods
-  const cheatTogglePropertyOwner = useCallback(
-    (playerId: number, tileId: number) => {
-      state.setPlayers(prev => {
-        const targetP = prev.find(p => p.id === playerId);
-        if (!targetP) return prev;
-        const isOwnedByTarget = targetP.propertiesOwned.includes(tileId);
-
-        const next = prev.map(p => {
-          const hasIt = p.propertiesOwned.includes(tileId);
-          if (p.id === playerId) {
-            if (isOwnedByTarget) {
-              const newProps = p.propertiesOwned.filter(id => id !== tileId);
-              const newHouses = { ...p.houses };
-              delete newHouses[tileId];
-              const newMortgaged = { ...p.mortgaged };
-              delete newMortgaged[tileId];
-              return { ...p, propertiesOwned: newProps, houses: newHouses, mortgaged: newMortgaged };
-            } else {
-              return {
-                ...p,
-                propertiesOwned: [...p.propertiesOwned, tileId],
-                houses: { ...p.houses, [tileId]: 0 },
-              };
-            }
-          } else if (hasIt) {
-            const newProps = p.propertiesOwned.filter(id => id !== tileId);
-            const newHouses = { ...p.houses };
-            delete newHouses[tileId];
-            const newMortgaged = { ...p.mortgaged };
-            delete newMortgaged[tileId];
-            return { ...p, propertiesOwned: newProps, houses: newHouses, mortgaged: newMortgaged };
-          }
-          return p;
-        });
-
-        const tile = state.tiles[tileId];
-        if (isOwnedByTarget) {
-          state.addLog(
-            `🛠️ [Cheat Test] Thu hồi ô [${tile?.name || tileId}] từ ${targetP.name} về Ngân Hàng`,
-            'property'
-          );
-        } else {
-          state.addLog(
-            `🛠️ [Cheat Test] Gán ô đất [${tile?.name || tileId}] cho ${targetP.name}`,
-            'property'
-          );
-        }
-        return next;
-      });
-    },
-    [state]
-  );
-
-  const cheatSetPropertyHouses = useCallback(
-    (playerId: number, tileId: number, count: number) => {
-      const clamped = Math.max(0, Math.min(5, count));
-      state.setPlayers(prev =>
-        prev.map(p => {
-          if (p.id === playerId) {
-            const owned = p.propertiesOwned.includes(tileId)
-              ? p.propertiesOwned
-              : [...p.propertiesOwned, tileId];
-            return {
-              ...p,
-              propertiesOwned: owned,
-              houses: { ...p.houses, [tileId]: clamped },
-            };
-          }
-          return p;
-        })
-      );
-      const tile = state.tiles[tileId];
-      const p = state.players.find(x => x.id === playerId);
-      state.addLog(
-        `🛠️ [Cheat Test] Đổi cấp nhà của ${p?.name} tại [${tile?.name}] thành ${
-          clamped === 5 ? 'Khách Sạn' : `${clamped} nhà`
-        }`,
-        'property'
-      );
-    },
-    [state]
-  );
-
-  const cheatAddConsumable = useCallback(
-    (playerId: number, abilityId: string) => {
-      state.setPlayers(prev =>
-        prev.map(p => {
-          if (p.id === playerId) {
-            return {
-              ...p,
-              consumableAbilities: [...p.consumableAbilities, abilityId],
-            };
-          }
-          return p;
-        })
-      );
-      const ab = state.consumableShop.find(a => a.id === abilityId);
-      const p = state.players.find(x => x.id === playerId);
-      state.addLog(`🛠️ [Cheat Test] Thêm thẻ năng lực [${ab?.name || abilityId}] cho ${p?.name}`, 'ability');
-    },
-    [state]
-  );
-
-  const cheatRemoveConsumable = useCallback(
-    (playerId: number, index: number) => {
-      state.setPlayers(prev =>
-        prev.map(p => {
-          if (p.id === playerId) {
-            const nextCards = [...p.consumableAbilities];
-            nextCards.splice(index, 1);
-            return { ...p, consumableAbilities: nextCards };
-          }
-          return p;
-        })
-      );
-      const p = state.players.find(x => x.id === playerId);
-      state.addLog(`🛠️ [Cheat Test] Xóa 1 thẻ năng lực dùng 1 lần của ${p?.name}`, 'ability');
-    },
-    [state]
-  );
-
-  const cheatAddPermanent = useCallback(
-    (playerId: number, abilityId: string) => {
-      state.setPlayers(prev =>
-        prev.map(p => {
-          if (p.id === playerId) {
-            if (p.permanentAbilities.includes(abilityId)) return p;
-            return {
-              ...p,
-              permanentAbilities: [...p.permanentAbilities, abilityId],
-            };
-          }
-          return p;
-        })
-      );
-      const ab = state.permanentShop.find(a => a.id === abilityId);
-      const p = state.players.find(x => x.id === playerId);
-      state.addLog(`🛠️ [Cheat Test] Thêm năng lực VIP [${ab?.name || abilityId}] cho ${p?.name}`, 'ability');
-    },
-    [state]
-  );
-
-  const cheatRemovePermanent = useCallback(
-    (playerId: number, abilityId: string) => {
-      state.setPlayers(prev =>
-        prev.map(p => {
-          if (p.id === playerId) {
-            return {
-              ...p,
-              permanentAbilities: p.permanentAbilities.filter(id => id !== abilityId),
-            };
-          }
-          return p;
-        })
-      );
-      const ab = state.permanentShop.find(a => a.id === abilityId);
-      const p = state.players.find(x => x.id === playerId);
-      state.addLog(`🛠️ [Cheat Test] Xóa năng lực VIP [${ab?.name || abilityId}] của ${p?.name}`, 'ability');
-    },
-    [state]
-  );
-
-  const cheatSetGetOutOfJailCards = useCallback(
-    (playerId: number, count: number) => {
-      const safeCount = Math.max(0, count);
-      state.setPlayers(prev =>
-        prev.map(p => {
-          if (p.id === playerId) {
-            return { ...p, getOutOfJailCards: safeCount };
-          }
-          return p;
-        })
-      );
-      const p = state.players.find(x => x.id === playerId);
-      state.addLog(`🛠️ [Cheat Test] Đặt số [Thẻ Ra Tù Miễn Phí] của ${p?.name} thành ${safeCount}`, 'jail');
-    },
-    [state]
-  );
-
-  const cheatSetCash = useCallback(
-    (playerId: number, amount: number) => {
-      const safeCash = Math.max(0, amount);
-      state.setPlayers(prev =>
-        prev.map(p => {
-          if (p.id === playerId) {
-            return { ...p, cash: safeCash };
-          }
-          return p;
-        })
-      );
-      const p = state.players.find(x => x.id === playerId);
-      state.addLog(`🛠️ [Cheat Test] Đặt số dư của ${p?.name} thành ${safeCash}đ`, 'money');
-    },
-    [state]
-  );
-
-  const cheatToggleJail = useCallback(
-    (playerId: number) => {
-      state.setPlayers(prev =>
-        prev.map(p => {
-          if (p.id === playerId) {
-            const willBeInJail = !p.inJail;
-            return {
-              ...p,
-              inJail: willBeInJail,
-              position: willBeInJail ? 10 : p.position,
-              jailTurns: 0,
-            };
-          }
-          return p;
-        })
-      );
-      const p = state.players.find(x => x.id === playerId);
-      state.addLog(`🛠️ [Cheat Test] Đổi trạng thái tù/điều tra của ${p?.name}`, 'jail');
-    },
-    [state]
-  );
-
-  const cheatTeleportPlayer = useCallback(
-    (playerId: number, targetTileId: number, triggerAction = false) => {
-      const normalizedPos = (targetTileId + 40) % 40;
-      state.setPlayers(prev =>
-        prev.map(p => {
-          if (p.id === playerId) {
-            return { ...p, position: normalizedPos };
-          }
-          return p;
-        })
-      );
-      const p = state.players.find(x => x.id === playerId);
-      const tile = state.tiles[normalizedPos];
-      state.addLog(
-        `🛠️ [Cheat Test] Dịch chuyển ${p?.name} đến ô [${tile?.name || normalizedPos}]${
-          triggerAction ? ' và kích hoạt hành động ô' : ''
-        }`,
-        'info'
-      );
-      if (triggerAction) {
-        setTimeout(() => {
-          resolveTileLanding(playerId, normalizedPos, 0);
-        }, 120);
-      }
-    },
-    [state, resolveTileLanding]
-  );
+  const cheatActions = useCheatActions({
+    setPlayers: state.setPlayers,
+    tiles: state.tiles,
+    consumableShop: state.consumableShop,
+    permanentShop: state.permanentShop,
+    addLog: state.addLog,
+    resolveTileLanding,
+  });
 
   return {
     ...state,
@@ -649,23 +272,9 @@ export const useMonopolyGame = () => {
     skipDrawnCard,
     getBaseBailFee: getBailFee,
     calculateRent,
-    updateCardQuantity,
-    updateConsumableQuantity,
-    updatePermanentQuantity,
+    ...persistence,
     triggerCashTransfer,
     triggerCharacterEvent,
-    loadSavedGame,
-    getCurrentSaveState,
-    // Cheat Actions
-    cheatTogglePropertyOwner,
-    cheatSetPropertyHouses,
-    cheatAddConsumable,
-    cheatRemoveConsumable,
-    cheatAddPermanent,
-    cheatRemovePermanent,
-    cheatSetGetOutOfJailCards,
-    cheatSetCash,
-    cheatToggleJail,
-    cheatTeleportPlayer,
+    ...cheatActions,
   };
 };

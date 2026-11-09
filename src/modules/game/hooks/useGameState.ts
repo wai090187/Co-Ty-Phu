@@ -1,3 +1,8 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { useState, useCallback, useRef } from 'react';
 import {
   Tile,
@@ -24,8 +29,12 @@ import {
   loadChestDeckDb,
   saveChestDeckDb,
   resetAbilitiesDbToDefault,
-  loadUserDefaultSettings,
 } from '../../storage/abilitiesDb';
+import {
+  DEFAULT_SETTINGS,
+  SETTINGS_STORAGE_KEY,
+  loadCachedSettings,
+} from '../constants/defaultSettings';
 
 export interface SetupPlayerConfig {
   name: string;
@@ -35,52 +44,7 @@ export interface SetupPlayerConfig {
   color: string;
 }
 
-export const DEFAULT_SETTINGS: GameSettings = {
-  startingCash: 2000,
-  goExactBonus: 400,
-  goPassBonus: 200,
-  bailFeeBase: 100,
-  bailFeeRound10: 100,
-  bailFeeRound20: 200,
-  sameColorRentBoostPercent: 20,
-  jailRentPercent: 50,
-  maxConsumableAbilities: 3,
-  soundEnabled: true,
-  moveSpeed: 'normal',
-  jailVisitReward: 100,
-  bailMultiplierTurn1: 0,
-  bailMultiplierTurn2: 2,
-  bailMultiplierTurn3: 1,
-  vacantLandRentPercent: 20,
-  jailMode: 'investigation',
-  investigationIncomePenaltyPercent: 50,
-  investigationFeePenaltyPercent: 50,
-  aiTurnDelay: 2.0,
-  dramaticDiceRoll: true,
-  alwaysShowSidePanels: true,
-  enableSpecialInvestigator: true,
-  investigatorStartRound: 2,
-  investigatorAbilityChangeRounds: 1,
-};
-
-const SETTINGS_STORAGE_KEY = 'co_ty_phu_settings_cache_v3';
-
-const loadCachedSettings = (): GameSettings => {
-  try {
-    const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      return { ...DEFAULT_SETTINGS, ...parsed };
-    }
-    const userDef = loadUserDefaultSettings();
-    if (userDef) {
-      return { ...DEFAULT_SETTINGS, ...userDef };
-    }
-  } catch (e) {
-    console.error('Failed to load cached settings', e);
-  }
-  return DEFAULT_SETTINGS;
-};
+export { DEFAULT_SETTINGS };
 
 export const useGameState = () => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -89,17 +53,20 @@ export const useGameState = () => {
 
   const [settings, setSettingsInternal] = useState<GameSettings>(loadCachedSettings);
 
-  const setSettings = useCallback((newSettings: GameSettings | ((prev: GameSettings) => GameSettings)) => {
-    setSettingsInternal(prev => {
-      const next = typeof newSettings === 'function' ? newSettings(prev) : newSettings;
-      try {
-        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(next));
-      } catch (e) {
-        console.error('Failed to cache settings', e);
-      }
-      return next;
-    });
-  }, []);
+  const setSettings = useCallback(
+    (newSettings: GameSettings | ((prev: GameSettings) => GameSettings)) => {
+      setSettingsInternal(prev => {
+        const next = typeof newSettings === 'function' ? newSettings(prev) : newSettings;
+        try {
+          localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(next));
+        } catch (e) {
+          console.error('Failed to cache settings', e);
+        }
+        return next;
+      });
+    },
+    []
+  );
 
   const [hasMovedThisTurn, setHasMovedThisTurn] = useState(false);
   const [upgradesThisTurn, setUpgradesThisTurn] = useState(0);
@@ -125,7 +92,8 @@ export const useGameState = () => {
     });
   }, []);
 
-  const [consumableShop, setConsumableShopInternal] = useState<ConsumableAbility[]>(loadConsumablesDb);
+  const [consumableShop, setConsumableShopInternal] =
+    useState<ConsumableAbility[]>(loadConsumablesDb);
   const setConsumableShop = useCallback(
     (newAbilities: ConsumableAbility[] | ((prev: ConsumableAbility[]) => ConsumableAbility[])) => {
       setConsumableShopInternal(prev => {
@@ -137,7 +105,8 @@ export const useGameState = () => {
     []
   );
 
-  const [permanentShop, setPermanentShopInternal] = useState<PermanentAbility[]>(loadPermanentsDb);
+  const [permanentShop, setPermanentShopInternal] =
+    useState<PermanentAbility[]>(loadPermanentsDb);
   const setPermanentShop = useCallback(
     (newAbilities: PermanentAbility[] | ((prev: PermanentAbility[]) => PermanentAbility[])) => {
       setPermanentShopInternal(prev => {
@@ -163,8 +132,8 @@ export const useGameState = () => {
     active: false,
     position: 0,
     lapsCompleted: 0,
-    currentAbilityId: 'inv_compensate_neighbor',
-    usedAbilityIds: ['inv_compensate_neighbor'],
+    currentAbilityId: '',
+    usedAbilityIds: [],
   });
   const [isInvestigatorMoving, setIsInvestigatorMoving] = useState(false);
   const [isInvestigatorTurn, setIsInvestigatorTurn] = useState(false);
@@ -201,7 +170,9 @@ export const useGameState = () => {
   const [winner, setWinner] = useState<Player | null>(null);
 
   const [pendingDiceBoost, setPendingDiceBoost] = useState<number>(0);
-  const [pendingDestroyHousePlayerId, setPendingDestroyHousePlayerId] = useState<number | null>(null);
+  const [pendingDestroyHousePlayerId, setPendingDestroyHousePlayerId] = useState<number | null>(
+    null
+  );
   const [hasPendingExtraRoll, setHasPendingExtraRoll] = useState<boolean>(false);
 
   // Cheat Mode State
