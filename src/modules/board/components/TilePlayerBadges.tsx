@@ -52,6 +52,7 @@ export const TilePlayerBadges: React.FC<Props> = ({
             isAI={p.isAI}
             aiNumber={p.id}
             aiLevel={p.aiLevel}
+            color={p.color}
             size="sm"
             className="w-7 h-7 sm:w-8 sm:h-8"
           />

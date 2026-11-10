@@ -96,6 +96,7 @@ export const InventoryModal: React.FC<Props> = ({
                 isAI={player.isAI}
                 aiNumber={player.id}
                 aiLevel={player.aiLevel}
+                color={player.color}
                 emotion="action"
                 size="sm"
                 showPedestal={false}

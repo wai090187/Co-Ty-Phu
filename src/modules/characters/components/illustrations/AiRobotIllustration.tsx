@@ -5,20 +5,21 @@ export type CharacterEmotion = 'happy' | 'sad' | 'neutral' | 'action';
 
 interface Props {
   aiLevel?: AIDifficulty;
+  color?: string;
   emotion?: CharacterEmotion;
   showPedestal?: boolean;
 }
 
 export const AiRobotIllustration: React.FC<Props> = ({
   aiLevel = 'medium',
+  color,
   emotion = 'neutral',
   showPedestal = true,
 }) => {
-  const aiTheme = {
-    easy: { primary: '#10B981', secondary: '#047857', glow: '#6EE7B7' },
-    medium: { primary: '#F59E0B', secondary: '#B45309', glow: '#FDE68A' },
-    hard: { primary: '#EF4444', secondary: '#991B1B', glow: '#FCA5A5' },
-  }[aiLevel];
+  const primary = color || '#38BDF8';
+  const secondary = color ? `${color}CC` : '#0284C7';
+  const glow = color ? `${color}88` : '#BAE6FD';
+  const aiTheme = { primary, secondary, glow };
 
   return (
     <svg viewBox="0 0 160 220" className="w-full h-full drop-shadow-xl select-none">

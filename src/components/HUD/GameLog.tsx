@@ -70,7 +70,7 @@ export const GameLog: React.FC<Props> = ({ logs, className, exportContext }) => 
   return (
     <div
       className={`bg-white border-2 border-slate-200 rounded-xl p-3 flex flex-col shadow-xs select-none relative ${
-        className || 'h-[320px] xl:h-[360px]'
+        className || 'h-[450px] xl:h-[504px]'
       }`}
     >
       {/* Header with Title and Export Actions */}

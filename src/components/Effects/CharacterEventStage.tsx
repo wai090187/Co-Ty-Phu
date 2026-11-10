@@ -39,6 +39,7 @@ export const CharacterEventStage: React.FC<Props> = ({ event, player, onDismiss 
             isAI={player.isAI}
             aiNumber={player.id}
             aiLevel={player.aiLevel}
+            color={player.color}
             emotion={event.emotion}
             size="md"
             showPedestal={true}

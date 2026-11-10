@@ -143,7 +143,9 @@ export const BailAndRentRulesCard: React.FC<Props> = ({ settings, onChange }) =>
             />
             <span className="font-bold text-slate-600">%</span>
           </div>
-          <span className="text-[10px] text-slate-500">Mỗi căn cùng màu sở hữu thêm +10%</span>
+          <span className="text-[10px] text-slate-500">
+            Mỗi ô đất / căn nhà cùng màu sở hữu thêm +{settings.sameColorRentBoostPercent}%
+          </span>
         </div>
       </div>
 

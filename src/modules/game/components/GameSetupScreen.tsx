@@ -106,6 +106,7 @@ export const GameSetupScreen: React.FC<Props> = ({
                     isAI={cfg.isAI}
                     aiNumber={idx + 1}
                     aiLevel={cfg.aiLevel}
+                    color={cfg.color}
                     size="md"
                   />
                 </div>

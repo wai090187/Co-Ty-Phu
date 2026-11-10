@@ -100,6 +100,22 @@ class SoundEngine {
       this.playTone(freq, 'triangle', 0.25, 0.12, idx * 0.12);
     });
   }
+
+  public cashGain() {
+    if (!this.enabled) return;
+    const notes = [523.25, 659.25, 783.99, 1046.5];
+    notes.forEach((freq, idx) => {
+      this.playTone(freq, 'sine', 0.18, 0.1, idx * 0.08);
+    });
+  }
+
+  public cashLoss() {
+    if (!this.enabled) return;
+    const notes = [392.0, 329.63, 261.63, 220.0];
+    notes.forEach((freq, idx) => {
+      this.playTone(freq, 'triangle', 0.16, 0.09, idx * 0.09);
+    });
+  }
 }
 
 export const sounds = new SoundEngine();

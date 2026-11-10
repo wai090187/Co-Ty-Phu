@@ -65,6 +65,7 @@ export const CashTransferEffect: React.FC<Props> = ({ event, players, onDismiss 
                     isAI={payer.isAI}
                     aiNumber={payer.id}
                     aiLevel={payer.aiLevel}
+                    color={payer.color}
                     emotion="sad"
                     size="md"
                   />
@@ -128,6 +129,7 @@ export const CashTransferEffect: React.FC<Props> = ({ event, players, onDismiss 
                         isAI={rec.isAI}
                         aiNumber={rec.id}
                         aiLevel={rec.aiLevel}
+                        color={rec.color}
                         emotion="happy"
                         size="md"
                       />

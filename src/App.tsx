@@ -122,6 +122,7 @@ export default function App() {
           isRolling={game.isRolling}
           isMovingStepByStep={game.isMovingStepByStep}
           logs={game.logs}
+          cashTransferEvent={game.cashTransferEvent}
           onOpenInventory={id => {
             setShowInventoryPlayerId(id);
             const p = game.players.find(x => x.id === id);

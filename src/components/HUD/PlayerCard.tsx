@@ -55,6 +55,7 @@ export const PlayerCard: React.FC<Props> = ({
             isAI={player.isAI}
             aiNumber={player.id}
             aiLevel={player.aiLevel}
+            color={player.color}
             size="sm"
           />
           {player.emotion && (

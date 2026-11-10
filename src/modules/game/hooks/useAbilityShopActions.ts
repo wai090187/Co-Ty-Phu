@@ -123,12 +123,16 @@ export const useAbilityShopActions = (ctx: AbilityContext) => {
       if (!ctx.activePlayer || ctx.activePlayer.cash < ability.cost) return;
 
       sounds.purchase();
+      const existingId =
+        replaceAbilityId ||
+        (ctx.activePlayer.permanentAbilities.length > 0 ? ctx.activePlayer.permanentAbilities[0] : undefined);
+
       ctx.setPermanentShop(shop =>
         shop.map(a => {
           if (a.id === ability.id) {
             return { ...a, quantity: Math.max(0, (a.quantity ?? 1) - 1) };
           }
-          if (replaceAbilityId && a.id === replaceAbilityId) {
+          if (existingId && a.id === existingId) {
             return { ...a, quantity: (a.quantity ?? 0) + 1 };
           }
           return a;
@@ -138,13 +142,10 @@ export const useAbilityShopActions = (ctx: AbilityContext) => {
       ctx.setPlayers(prev => {
         return prev.map(p => {
           if (p.id === ctx.activePlayer!.id) {
-            const remainingAbilities = replaceAbilityId
-              ? p.permanentAbilities.filter(id => id !== replaceAbilityId)
-              : p.permanentAbilities;
             return {
               ...p,
               cash: p.cash - ability.cost,
-              permanentAbilities: [...remainingAbilities, ability.id],
+              permanentAbilities: [ability.id],
             };
           }
           return p;
@@ -207,7 +208,12 @@ export const useAbilityShopActions = (ctx: AbilityContext) => {
         `${ctx.activePlayer.name} vừa thi triển [${ability.name}]!`
       );
 
-      let extraMoveInfo = { isExtraMovement: false, moveSteps: 0, movePlayerId: ctx.activePlayer.id };
+      const isDiceBoost = ability.effectType === 'dice_boost';
+      const isDiceReduce = ability.effectType === 'dice_reduce';
+      const boostVal = ability.effectValue || ability.value || 1;
+      const moveSteps = isDiceBoost ? boostVal : isDiceReduce ? -boostVal : 0;
+      const canMoveNow = (isDiceBoost || isDiceReduce) && !ctx.activePlayer.inJail && moveSteps !== 0;
+      const movingPlayerId = ctx.activePlayer.id;
 
       ctx.setPlayers(prev => {
         const next = [...prev];
@@ -228,7 +234,7 @@ export const useAbilityShopActions = (ctx: AbilityContext) => {
           shop.map(a => (a.id === ability.id ? { ...a, quantity: (a.quantity ?? 0) + 1 } : a))
         );
 
-        extraMoveInfo = executeConsumableUseEffect({
+        executeConsumableUseEffect({
           ability,
           p,
           next,
@@ -252,22 +258,22 @@ export const useAbilityShopActions = (ctx: AbilityContext) => {
         return next;
       });
 
-      if (extraMoveInfo.isExtraMovement && extraMoveInfo.moveSteps > 0) {
+      if (canMoveNow) {
         sounds.step();
         if (ctx.movePlayerSteps) {
-          ctx.movePlayerSteps(extraMoveInfo.movePlayerId, extraMoveInfo.moveSteps);
+          ctx.movePlayerSteps(movingPlayerId, moveSteps);
         } else {
           ctx.setPlayers(curr =>
             curr.map(cp => {
-              if (cp.id !== extraMoveInfo.movePlayerId) return cp;
-              const newPos = (cp.position + extraMoveInfo.moveSteps) % 40;
+              if (cp.id !== movingPlayerId) return cp;
+              const newPos = (cp.position + moveSteps + 40) % 40;
               return { ...cp, position: newPos };
             })
           );
           setTimeout(() => {
             const targetP = ctx.activePlayer;
-            const newPos = targetP ? (targetP.position + extraMoveInfo.moveSteps) % 40 : 0;
-            ctx.resolveTileLanding(extraMoveInfo.movePlayerId, newPos, extraMoveInfo.moveSteps);
+            const newPos = targetP ? (targetP.position + moveSteps + 40) % 40 : 0;
+            ctx.resolveTileLanding(movingPlayerId, newPos, moveSteps);
           }, 150);
         }
       }

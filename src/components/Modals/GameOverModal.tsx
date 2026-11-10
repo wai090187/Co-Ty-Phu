@@ -53,6 +53,7 @@ export const GameOverModal: React.FC<Props> = ({ winner, tiles, onRestart }) => 
             isAI={winner.isAI}
             aiNumber={winner.id}
             aiLevel={winner.aiLevel}
+            color={winner.color}
             size="xl"
           />
         </div>

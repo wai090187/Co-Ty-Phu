@@ -6,7 +6,7 @@ export const DEFAULT_PLAYER_COLORS = [
   '#16A34A', // Green
   '#D97706', // Amber/Yellow
   '#9333EA', // Purple
-  '#0891B2', // Cyan
+  '#64748B', // Gray (Player 6)
 ];
 
 export const INITIAL_PLAYER_CONFIGS: SetupPlayerConfig[] = [

@@ -12,12 +12,14 @@ import {
   Tile,
   GameSettings,
   SpecialInvestigatorState,
+  CashTransferEvent,
 } from '../../../types/game';
 import { ALL_INVESTIGATOR_ABILITIES } from '../../../data/investigatorAbilities';
 import { PlayerCard } from '../../../components/HUD/PlayerCard';
 import { BoardView } from '../../../components/Board/BoardView';
 import { GameLog } from '../../../components/HUD/GameLog';
 import { GameDrawer } from '../../../components/Common/GameDrawer';
+import { CenterCashFeedbackEffect } from '../../../components/Effects/CenterCashFeedbackEffect';
 
 interface Props {
   players: Player[];
@@ -44,6 +46,7 @@ interface Props {
   settings?: GameSettings;
   onUseGetOutOfJailCard?: () => void;
   investigator?: SpecialInvestigatorState;
+  cashTransferEvent?: CashTransferEvent | null;
 }
 
 export const GamePlayScreen: React.FC<Props> = ({
@@ -59,6 +62,7 @@ export const GamePlayScreen: React.FC<Props> = ({
   isRolling,
   isMovingStepByStep,
   logs,
+  cashTransferEvent,
   onOpenInventory,
   onPayBail,
   canPlayerPayBail,
@@ -182,10 +186,16 @@ export const GamePlayScreen: React.FC<Props> = ({
 
       {/* Optional Docked Right Panel: Game Live Log (Anchored to top to avoid notification overlap) */}
       {showDockedSides && (
-        <aside className="hidden lg:flex flex-col w-64 xl:w-72 self-start pt-1.5 max-h-[calc(100vh-70px)] shrink-0 animate-in fade-in duration-200">
-          <GameLog logs={logs} exportContext={exportContext} className="h-[320px] xl:h-[360px] shadow-lg" />
+        <aside className="hidden lg:flex flex-col w-64 xl:w-72 self-start pt-1.5 max-h-[calc(100vh-50px)] shrink-0 animate-in fade-in duration-200">
+          <GameLog logs={logs} exportContext={exportContext} className="h-[450px] xl:h-[504px] shadow-lg" />
         </aside>
       )}
+
+      {/* Floating Center Screen Cash Gain / Loss Feedback (Roller only) */}
+      <CenterCashFeedbackEffect
+        cashTransferEvent={cashTransferEvent ?? null}
+        activePlayer={activePlayer}
+      />
 
       {/* Slide-out Drawer: Players List (for mobile/tablet or when docked sides is off) */}
       <GameDrawer

@@ -16,6 +16,7 @@ export interface CharacterIllustration2D5Props {
   isAI?: boolean;
   aiNumber?: number;
   aiLevel?: AIDifficulty;
+  color?: string;
   emotion?: CharacterEmotion;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   showPedestal?: boolean;
@@ -26,6 +27,7 @@ export const CharacterIllustration2D5: React.FC<CharacterIllustration2D5Props> =
   characterId = 'cong-tu',
   isAI = false,
   aiLevel = 'medium',
+  color,
   emotion = 'neutral',
   size = 'md',
   showPedestal = true,
@@ -42,7 +44,7 @@ export const CharacterIllustration2D5: React.FC<CharacterIllustration2D5Props> =
   if (isAI) {
     return (
       <div className={`relative flex items-center justify-center ${sizeStyles} ${className}`}>
-        <AiRobotIllustration aiLevel={aiLevel} emotion={emotion} showPedestal={showPedestal} />
+        <AiRobotIllustration aiLevel={aiLevel} color={color} emotion={emotion} showPedestal={showPedestal} />
       </div>
     );
   }

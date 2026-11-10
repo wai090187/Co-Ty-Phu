@@ -1,9 +1,9 @@
 # 📋 BÁO CÁO KIỂM THỬ TOÀN DIỆN LOGIC TRIGGER NĂNG LỰC CỜ TỶ PHÚ VIỆT NAM
 
-**Phiên bản ứng dụng:** `v1.5.3`  
-**Ngày kiểm thử & cập nhật:** 09/11/2026  
+**Phiên bản ứng dụng:** `v1.5.4`  
+**Ngày kiểm thử & cập nhật:** 10/11/2026  
 **Lệnh chạy kiểm thử tự động:** `npx tsx scripts/test_abilities_logic.ts`  
-**Kết quả tổng quan:** **62 / 62 test case ĐẠT (100% PASS)**
+**Kết quả tổng quan:** **66 / 66 test case ĐẠT (100% PASS)**
 
 ---
 
@@ -17,7 +17,8 @@
 | **Tuần Tra Ngược Chiều (Investigator Reverse Patrol)** | 3 | 3 | 0 | ✅ Hoàn hảo (0 -> 39 -> 38 ... -> 0) |
 | **Lọc Năng Lực Tăng/Giảm Ô Di Chuyển Cho AI** | 5 | 5 | 0 | ✅ Hoàn hảo (Loại bỏ dice_boost, dice_reduce, push_neighbor) |
 | **Quy Chế Thẻ Khởi Hành (cs-10, ch-1) & Xuất Nhật Ký** | 4 | 4 | 0 | ✅ Hoàn hảo (cs-10 & ch-1 không nhận thưởng theo đúng quy chế & export log debug) |
-| **TỔNG CỘNG** | **57** | **62 cases** | **0** | 🎯 **100% VƯỢT QUA** |
+| **Fix Gia Tốc/Hãm Phanh Di Chuyển Ngay, Thuế Đất Trống & Cùng Màu** | 4 | 4 | 0 | ✅ Hoàn hảo (Di chuyển ngay lập tức, tính thuế đất trống theo giá gốc 100%, tăng theo nhà cùng màu) |
+| **TỔNG CỘNG** | **61** | **66 cases** | **0** | 🎯 **100% VƯỢT QUA** |
 
 ---
 

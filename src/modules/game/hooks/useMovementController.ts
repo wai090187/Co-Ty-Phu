@@ -41,6 +41,10 @@ interface MovementContext {
 export const useMovementController = (ctx: MovementContext) => {
   const movePlayerSteps = useCallback(
     (playerId: number, stepsRemaining: number) => {
+      if (ctx.moveTimerRef.current) {
+        clearTimeout(ctx.moveTimerRef.current);
+        ctx.moveTimerRef.current = null;
+      }
       ctx.remainingStepsRef.current = stepsRemaining;
       ctx.movingPlayerIdRef.current = playerId;
       ctx.setIsMovingStepByStep(true);
@@ -49,7 +53,7 @@ export const useMovementController = (ctx: MovementContext) => {
       const stepInterval = speedMap[ctx.settings.moveSpeed as 'slow' | 'normal' | 'fast'] || 240;
 
       const takeStep = () => {
-        if (ctx.remainingStepsRef.current <= 0) {
+        if (ctx.remainingStepsRef.current === 0) {
           ctx.setIsMovingStepByStep(false);
           ctx.movingPlayerIdRef.current = null;
           ctx.setPlayers(prev => {
@@ -64,17 +68,18 @@ export const useMovementController = (ctx: MovementContext) => {
           return;
         }
 
-        ctx.remainingStepsRef.current -= 1;
+        const isMovingForward = ctx.remainingStepsRef.current > 0;
+        ctx.remainingStepsRef.current += isMovingForward ? -1 : 1;
         const isFinalStep = ctx.remainingStepsRef.current === 0;
 
         ctx.setPlayers(prev => {
           return prev.map(p => {
             if (p.id !== playerId) return p;
             const oldPos = p.position;
-            const newPos = (oldPos + 1) % 40;
+            const newPos = isMovingForward ? (oldPos + 1) % 40 : (oldPos - 1 + 40) % 40;
             sounds.step();
 
-            if (newPos === 0) {
+            if (isMovingForward && newPos === 0) {
               applyGoTileBonus({
                 player: p,
                 isExact: isFinalStep,
@@ -97,7 +102,7 @@ export const useMovementController = (ctx: MovementContext) => {
   );
 
   const skipMovement = useCallback(() => {
-    if (!ctx.isMovingStepByStep || ctx.remainingStepsRef.current <= 0) return;
+    if (!ctx.isMovingStepByStep || ctx.remainingStepsRef.current === 0) return;
     if (ctx.moveTimerRef.current) clearTimeout(ctx.moveTimerRef.current);
 
     const stepsToJump = ctx.remainingStepsRef.current;
@@ -112,10 +117,13 @@ export const useMovementController = (ctx: MovementContext) => {
       const next = prev.map(p => {
         if (p.id !== pId) return p;
         const oldPos = p.position;
-        const newPos = (oldPos + stepsToJump) % 40;
-        const passedGo = oldPos + stepsToJump >= 40;
+        const isForward = stepsToJump > 0;
+        const newPos = isForward
+          ? (oldPos + stepsToJump) % 40
+          : (oldPos + stepsToJump + 40) % 40;
+        const passedGo = isForward && oldPos + stepsToJump >= 40;
 
-        if (newPos === 0) {
+        if (isForward && newPos === 0) {
           applyGoTileBonus({
             player: p,
             isExact: true,

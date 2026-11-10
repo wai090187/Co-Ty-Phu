@@ -54,7 +54,14 @@ export const loadConsumablesDb = (): ConsumableAbility[] => {
         // Merge: Giữ các kỹ năng người chơi đã sửa/thêm, đồng thời đảm bảo các kỹ năng mặc định mới vẫn xuất hiện nếu chưa có
         const existingIds = new Set(parsed.map(a => a.id));
         const newDefaults = INITIAL_CONSUMABLE_ABILITIES.filter(a => !existingIds.has(a.id));
-        return [...parsed, ...newDefaults];
+        const merged = [...parsed, ...newDefaults];
+        return merged.map(a => {
+          const def = INITIAL_CONSUMABLE_ABILITIES.find(d => d.id === a.id);
+          if (def && (a.id.startsWith('dice-plus-') || a.id.startsWith('dice-minus-'))) {
+            return { ...a, description: def.description };
+          }
+          return a;
+        });
       }
     }
     // Fallback: Nếu chưa có key riêng, kiểm tra cấu hình mặc định toàn bộ của máy

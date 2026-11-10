@@ -88,6 +88,7 @@ export const TargetPlayerModal: React.FC<Props> = ({
                       isAI={target.isAI}
                       aiNumber={target.id}
                       aiLevel={target.aiLevel}
+                      color={target.color}
                       size="sm"
                     />
                     <div className="text-left">

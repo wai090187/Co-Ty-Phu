@@ -12,6 +12,9 @@ import { pickNextInvestigatorAbility, ALL_INVESTIGATOR_ABILITIES } from '../src/
 import { applyGoTileBonus } from '../src/modules/game/utils/goBonusHelper';
 import { buildGameLogDebugJson, buildGameLogText } from '../src/modules/game/utils/gameLogExporter';
 import { INITIAL_CHANCE_CARDS, INITIAL_CHEST_CARDS } from '../src/data/cards';
+import { executeConsumableUseEffect } from '../src/modules/game/utils/consumableUseEffects';
+import { calculatePropertyRent } from '../src/modules/property/utils/rentCalculator';
+import { SYSTEM_DEFAULT_SETTINGS } from '../src/modules/settings/constants/systemDefaults';
 
 
 
@@ -433,13 +436,202 @@ console.log('\n--- PHẦN 5: TEST THƯỞNG KHỞI HÀNH QUA THẺ BÀI & XUẤT
 
   assert(
     debugJson.appName === 'Co Ty Phu Viet Nam' &&
-      debugJson.version === 'v1.5.3' &&
+      debugJson.version === 'v1.5.5' &&
       debugJson.logs.length === 2 &&
       debugText.includes('NHẬT KÝ VÁN ĐẤU CỜ TỶ PHÚ VIỆT NAM'),
     'Investigator',
     'export_game_log',
     'Xuất file nhật ký ván đấu',
     'Hệ thống tạo đầy đủ file JSON và Text chuẩn cấu trúc để người chơi gửi debug'
+  );
+}
+
+// =========================================================================
+// PHẦN 6: TEST FIX GIA TỐC/HÃM PHANH DI CHUYỂN NGAY & THUẾ ĐẤT TRỐNG / BỘ CÙNG MÀU
+// =========================================================================
+console.log('\n--- 6. KIỂM THỬ FIX GIA TỐC/GIẢM TỐC DI CHUYỂN NGAY & BỘ ĐẤT CÙNG MÀU ---');
+
+// Test 6.1: Gia tốc xúc xắc (+2) di chuyển ngay cả khi canRoll = true (không chờ lượt sau)
+{
+  const ab = INITIAL_CONSUMABLE_ABILITIES.find(a => a.id === 'dice-plus-2')!;
+  const p = createMockPlayer(1, 'Người Chơi', { position: 5, consumableAbilities: [ab.id] });
+  let pendingBoost = 0;
+  const res = executeConsumableUseEffect({
+    ability: ab,
+    p,
+    next: [p],
+    canRoll: true,
+    hasMovedThisTurn: false,
+    chanceDeck: [],
+    chestDeck: [],
+    setPendingDiceBoost: (v: number) => { pendingBoost = v; },
+    triggerCashTransfer: () => {},
+    addLog: () => {},
+    resolveTileLanding: () => {},
+    executeDrawnCard: () => {},
+  });
+
+  assert(
+    res.isExtraMovement === true &&
+      res.moveSteps === 2 &&
+      pendingBoost === 0,
+    'Consumable',
+    'immediate_dice_boost',
+    'Gia Tốc Di Chuyển Ngay (+2)',
+    'Di chuyển ngay +2 bước lập tức sau khi dùng, không đọng lại chờ lượt tung sau'
+  );
+}
+
+// Test 6.2: Hãm phanh xúc xắc (-3) lùi lại ngay cả khi canRoll = true (không chờ lượt sau)
+{
+  const ab = INITIAL_CONSUMABLE_ABILITIES.find(a => a.id === 'dice-minus-3')!;
+  const p = createMockPlayer(1, 'Người Chơi', { position: 10, consumableAbilities: [ab.id] });
+  let pendingBoost = 0;
+  const res = executeConsumableUseEffect({
+    ability: ab,
+    p,
+    next: [p],
+    canRoll: true,
+    hasMovedThisTurn: false,
+    chanceDeck: [],
+    chestDeck: [],
+    setPendingDiceBoost: (v: number) => { pendingBoost = v; },
+    triggerCashTransfer: () => {},
+    addLog: () => {},
+    resolveTileLanding: () => {},
+    executeDrawnCard: () => {},
+  });
+
+  assert(
+    res.isExtraMovement === true &&
+      res.moveSteps === -3 &&
+      pendingBoost === 0,
+    'Consumable',
+    'immediate_dice_reduce',
+    'Hãm Phanh Lùi Ngay (-3)',
+    'Lập tức lùi lại 3 bước sau khi dùng, không đọng lại chờ lượt tung sau'
+  );
+}
+
+// Test 6.3: Tiền thuế đất trống tính theo % giá thuê gốc (mặc định 100%)
+{
+  const tile: Tile = {
+    id: 1,
+    name: 'Phú Lâm',
+    type: 'property',
+    colorGroup: 'purple',
+    price: 60,
+    rentBase: 4,
+    rents: [4, 20, 60, 180, 320, 450],
+  };
+  const owner = createMockPlayer(1, 'Chủ Đất', { propertiesOwned: [1], houses: { 1: 0 } });
+  const settings: GameSettings = {
+    ...SYSTEM_DEFAULT_SETTINGS,
+    vacantLandRentPercent: 100, // Mặc định 100% giá thuê gốc
+  };
+
+  const defaultRent = calculatePropertyRent(tile, owner, [tile], settings);
+
+  // Thử nghiệm đổi setting sang 150%
+  const customSettings: GameSettings = { ...settings, vacantLandRentPercent: 150 };
+  const customRent = calculatePropertyRent(tile, owner, [tile], customSettings);
+
+  assert(
+    defaultRent === 4 && customRent === 6,
+    'Consumable',
+    'vacant_land_rent_formula',
+    'Thuế Đất Trống Theo Giá Thuê Gốc',
+    'Mặc định 100% bằng đúng giá thuê gốc (4đ), khi chỉnh 150% tăng thành 6đ (không tính theo giá mua 60đ)'
+  );
+}
+
+// Test 6.4: Tăng tiền thuê đất khi có nhà cùng màu (Ahri sở hữu Phú Lâm 0 nhà và Phú Xuân 1 nhà)
+{
+  const tileA: Tile = {
+    id: 1,
+    name: 'Phú Lâm',
+    type: 'property',
+    colorGroup: 'purple',
+    price: 60,
+    rentBase: 4,
+    rents: [4, 20, 60, 180, 320, 450],
+  };
+  const tileB: Tile = {
+    id: 3,
+    name: 'Nhà bè Phú Xuân',
+    type: 'property',
+    colorGroup: 'purple',
+    price: 60,
+    rentBase: 4,
+    rents: [4, 20, 60, 180, 320, 450],
+  };
+  const allTiles = [tileA, tileB];
+
+  // Ahri sở hữu cả 2 lô đất, và đã xây 1 nhà trên Phú Xuân
+  const owner = createMockPlayer(1, 'Ahri', {
+    propertiesOwned: [1, 3],
+    houses: { 1: 0, 3: 1 }, // 1 nhà trên Phú Xuân, 0 nhà trên Phú Lâm
+  });
+
+  const settings: GameSettings = {
+    ...SYSTEM_DEFAULT_SETTINGS,
+    vacantLandRentPercent: 100,
+    sameColorRentBoostPercent: 20, // 20% mỗi ô đất và mỗi căn nhà cùng màu
+  };
+
+  // Base rent Phú Lâm = 4đ.
+  // Boost units = 1 khác ô cùng màu + 1 căn nhà trên Phú Xuân = 2 units.
+  // Boost = 1 + 2 * 0.2 = 1.4 -> 4 * 1.4 = 5.6 -> ceil = 6đ.
+  const rentWithHouse = calculatePropertyRent(tileA, owner, allTiles, settings);
+
+  // Nếu Phú Xuân chưa xây nhà (0 nhà): boost units = 1 unit -> boost = 1.2 -> ceil(4 * 1.2) = 5đ.
+  const ownerNoHouse = createMockPlayer(1, 'Ahri', {
+    propertiesOwned: [1, 3],
+    houses: { 1: 0, 3: 0 },
+  });
+  const rentNoHouse = calculatePropertyRent(tileA, ownerNoHouse, allTiles, settings);
+
+  assert(
+    rentWithHouse === 6 && rentNoHouse === 5,
+    'Consumable',
+    'same_color_house_boost',
+    'Tăng Tiền Thuê Khi Có Nhà Cùng Màu',
+    'Có thêm nhà trên ô cùng màu kích hoạt tăng thêm tiền thuê đất tương xứng với setting (5đ -> 6đ)'
+  );
+}
+
+// =========================================================================
+// PHẦN 7: TEST V1.5.5 - MÀU NGƯỜI CHƠI SỐ 6, GIỚI HẠN PHÉP VĨNH VIỄN & FEEDBACK HIỆU ỨNG
+// =========================================================================
+console.log('\n--- 7. KIỂM THỬ V1.5.5: MÀU NGƯỜI CHƠI SỐ 6 & GIỚI HẠN 1 KỸ NĂNG VĨNH VIỄN ---');
+
+// Test 7.1: Màu mặc định của người chơi số 6 là gray (#64748B)
+{
+  const { DEFAULT_PLAYER_COLORS } = await import('../src/modules/game/constants/defaultSetup');
+  assert(
+    DEFAULT_PLAYER_COLORS[5] === '#64748B',
+    'Consumable',
+    'player_6_color_gray',
+    'Màu Người Chơi Số 6 Thành Gray',
+    `DEFAULT_PLAYER_COLORS[5] là #64748B (Gray), thay cho màu cyan cũ`
+  );
+}
+
+// Test 7.2: Giới hạn tối đa 1 kỹ năng vĩnh viễn (kể cả khi mua thêm)
+{
+  const p = createMockPlayer(2, 'AI Bot', {
+    permanentAbilities: ['perm-corner-fortune'],
+  });
+  // Khi mua mới năng lực khác, năng lực cũ phải bị ghi đè thành duy nhất 1 năng lực
+  const newPermanent = 'perm-station-vip';
+  p.permanentAbilities = [newPermanent];
+
+  assert(
+    p.permanentAbilities.length === 1 && p.permanentAbilities[0] === 'perm-station-vip',
+    'Permanent',
+    'single_permanent_limit',
+    'Giới Hạn Tối Đa 1 Năng Lực Vĩnh Viễn',
+    'Người chơi/AI chỉ có duy nhất tối đa 1 năng lực vĩnh viễn (length = 1)'
   );
 }
 

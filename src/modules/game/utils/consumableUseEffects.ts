@@ -62,55 +62,42 @@ export function executeConsumableUseEffect(ctx: ConsumableUseContext): Consumabl
   switch (ability.effectType) {
     case 'dice_boost': {
       const boostVal = ability.effectValue || ability.value || 1;
-      if (!canRoll || hasMovedThisTurn) {
-        if (p.inJail) {
-          addLog(
-            `🚨 [${ability.name}] ${p.name} đang trong diện giam giữ/điều tra nên không thể di chuyển!`,
-            'jail'
-          );
-          break;
-        }
-        isExtraMovement = true;
-        moveSteps = boostVal;
-        movePlayerId = p.id;
-        if (setUpgradesThisTurn) setUpgradesThisTurn(0);
-        if (setHasMovedThisTurn) setHasMovedThisTurn(true);
+      if (p.inJail) {
         addLog(
-          `🚀 [${ability.name}] ${p.name} kích hoạt lượt di chuyển thêm: Đi tiếp +${boostVal} bước như một lượt mới!`,
-          'ability'
+          `🚨 [${ability.name}] ${p.name} đang trong diện giam giữ/điều tra nên không thể di chuyển!`,
+          'jail'
         );
-      } else {
-        setPendingDiceBoost(boostVal);
-        addLog(`🚀 [${ability.name}]: +${boostVal} bước cho lần tung xúc xắc tới!`, 'ability');
+        break;
       }
+      isExtraMovement = true;
+      moveSteps = boostVal;
+      movePlayerId = p.id;
+      if (setUpgradesThisTurn) setUpgradesThisTurn(0);
+      if (setHasMovedThisTurn) setHasMovedThisTurn(true);
+      addLog(
+        `🚀 [${ability.name}] ${p.name} kích hoạt: Lập tức di chuyển tiến +${boostVal} bước!`,
+        'ability'
+      );
       break;
     }
     case 'dice_reduce': {
       const reduceVal = ability.effectValue || ability.value || 1;
-      if (!canRoll || hasMovedThisTurn) {
-        if (p.inJail) {
-          addLog(
-            `🚨 [${ability.name}] ${p.name} đang trong diện giam giữ/điều tra nên không thể di chuyển!`,
-            'jail'
-          );
-          break;
-        }
-        if (setUpgradesThisTurn) setUpgradesThisTurn(0);
-        if (setHasMovedThisTurn) setHasMovedThisTurn(true);
-        const newPos = (p.position - reduceVal + 40) % 40;
-        p.position = newPos;
-        sounds.step();
+      if (p.inJail) {
         addLog(
-          `🛑 [${ability.name}] ${p.name} hãm phanh lùi lại ${reduceVal} bước về [${tiles?.[newPos]?.name || newPos}] như một lượt mới!`,
-          'ability'
+          `🚨 [${ability.name}] ${p.name} đang trong diện giam giữ/điều tra nên không thể di chuyển!`,
+          'jail'
         );
-        setTimeout(() => {
-          resolveTileLanding(p.id, newPos, 0);
-        }, 200);
-      } else {
-        setPendingDiceBoost(-reduceVal);
-        addLog(`🛑 [${ability.name}]: -${reduceVal} bước cho lần tung xúc xắc tới!`, 'ability');
+        break;
       }
+      isExtraMovement = true;
+      moveSteps = -reduceVal;
+      movePlayerId = p.id;
+      if (setUpgradesThisTurn) setUpgradesThisTurn(0);
+      if (setHasMovedThisTurn) setHasMovedThisTurn(true);
+      addLog(
+        `🛑 [${ability.name}] ${p.name} kích hoạt: Lập tức lùi lại ${reduceVal} bước!`,
+        'ability'
+      );
       break;
     }
     case 'free_tax':

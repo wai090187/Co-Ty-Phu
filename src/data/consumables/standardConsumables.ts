@@ -9,7 +9,7 @@ export const STANDARD_CONSUMABLE_ABILITIES: ConsumableAbility[] = [
   {
     id: 'dice-plus-1',
     name: 'Gia Tốc Xúc Xắc (+1)',
-    description: 'Tăng thêm 1 bước đi ngay sau khi bạn tung xúc xắc.',
+    description: 'Lập tức di chuyển tiến thêm 1 bước trên bàn cờ.',
     cost: 50,
     icon: 'dice-up',
     triggerCondition: 'when_roll_dice',
@@ -21,7 +21,7 @@ export const STANDARD_CONSUMABLE_ABILITIES: ConsumableAbility[] = [
   {
     id: 'dice-plus-2',
     name: 'Gia Tốc Xúc Xắc (+2)',
-    description: 'Tăng thêm 2 bước đi ngay sau khi bạn tung xúc xắc.',
+    description: 'Lập tức di chuyển tiến thêm 2 bước trên bàn cờ.',
     cost: 90,
     icon: 'dice-up',
     triggerCondition: 'when_roll_dice',
@@ -33,7 +33,7 @@ export const STANDARD_CONSUMABLE_ABILITIES: ConsumableAbility[] = [
   {
     id: 'dice-plus-3',
     name: 'Gia Tốc Xúc Xắc (+3)',
-    description: 'Tăng thêm 3 bước đi ngay sau khi bạn tung xúc xắc.',
+    description: 'Lập tức di chuyển tiến thêm 3 bước trên bàn cờ.',
     cost: 130,
     icon: 'dice-up',
     triggerCondition: 'when_roll_dice',
@@ -45,7 +45,7 @@ export const STANDARD_CONSUMABLE_ABILITIES: ConsumableAbility[] = [
   {
     id: 'dice-minus-1',
     name: 'Hãm Phanh Xúc Xắc (-1)',
-    description: 'Giảm bớt 1 bước đi ngay sau khi tung xúc xắc để tránh bẫy.',
+    description: 'Lập tức lùi lại 1 bước trên bàn cờ để tránh bẫy hoặc đổi ô.',
     cost: 50,
     icon: 'dice-down',
     triggerCondition: 'when_roll_dice',
@@ -57,7 +57,7 @@ export const STANDARD_CONSUMABLE_ABILITIES: ConsumableAbility[] = [
   {
     id: 'dice-minus-2',
     name: 'Hãm Phanh Xúc Xắc (-2)',
-    description: 'Giảm bớt 2 bước đi ngay sau khi tung xúc xắc để tránh bẫy.',
+    description: 'Lập tức lùi lại 2 bước trên bàn cờ để tránh bẫy hoặc đổi ô.',
     cost: 90,
     icon: 'dice-down',
     triggerCondition: 'when_roll_dice',
@@ -69,7 +69,7 @@ export const STANDARD_CONSUMABLE_ABILITIES: ConsumableAbility[] = [
   {
     id: 'dice-minus-3',
     name: 'Hãm Phanh Xúc Xắc (-3)',
-    description: 'Giảm bớt 3 bước đi ngay sau khi tung xúc xắc để tránh bẫy.',
+    description: 'Lập tức lùi lại 3 bước trên bàn cờ để tránh bẫy hoặc đổi ô.',
     cost: 130,
     icon: 'dice-down',
     triggerCondition: 'when_roll_dice',

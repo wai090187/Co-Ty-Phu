@@ -46,6 +46,7 @@ export const AiActionModal: React.FC<Props> = ({
             isAI={true}
             aiNumber={aiPlayer.id}
             aiLevel={aiPlayer.aiLevel}
+            color={aiPlayer.color}
             size="md"
           />
           <div className="text-left">

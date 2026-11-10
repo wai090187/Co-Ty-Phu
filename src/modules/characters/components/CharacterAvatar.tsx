@@ -21,6 +21,7 @@ export interface CharacterAvatarProps {
   isAI?: boolean;
   aiNumber?: number;
   aiLevel?: AIDifficulty;
+  color?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
 }
@@ -30,6 +31,7 @@ export const CharacterAvatar: React.FC<CharacterAvatarProps> = ({
   isAI = false,
   aiNumber = 1,
   aiLevel = 'medium',
+  color,
   size = 'md',
   className = '',
 }) => {
@@ -45,6 +47,7 @@ export const CharacterAvatar: React.FC<CharacterAvatarProps> = ({
       <AIAvatarSvg
         aiLevel={aiLevel}
         aiNumber={aiNumber}
+        color={color}
         sizeClasses={sizeClasses}
         className={className}
       />

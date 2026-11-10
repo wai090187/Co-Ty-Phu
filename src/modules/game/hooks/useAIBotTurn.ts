@@ -151,6 +151,11 @@ export const useAIBotTurn = (ctx: AIContext) => {
       }
       // 5. Utility Ability
       else if (ctx.activeUtilityModal) {
+        // AI chỉ được sở hữu tối đa 1 kỹ năng vĩnh viễn
+        if (bot.permanentAbilities && bot.permanentAbilities.length >= 1) {
+          ctx.setActiveUtilityModal?.(null);
+          return;
+        }
         const unowned = ctx.permanentShop.filter(
           a => !ctx.players.some(p => p.permanentAbilities.includes(a.id))
         );

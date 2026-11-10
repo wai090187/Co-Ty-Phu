@@ -77,15 +77,26 @@ export const calculatePropertyRent = (
     }
   }
 
-  // Color group boost rule: +10% per same color owned
+  // Color group boost rule: boost per same color property owned and per house built on same-color properties
   if (tile.colorGroup) {
-    const sameColorOwnedCount = tiles.filter(
+    const sameColorOwnedTiles = tiles.filter(
       t => t.colorGroup === tile.colorGroup && owner.propertiesOwned.includes(t.id)
-    ).length;
+    );
+    const sameColorOwnedCount = sameColorOwnedTiles.length;
 
-    if (sameColorOwnedCount > 1) {
+    // Count other properties of the same color owned
+    const otherPropsCount = Math.max(0, sameColorOwnedCount - 1);
+
+    // Count houses built on other same-color properties
+    const otherSameColorHousesCount = sameColorOwnedTiles
+      .filter(t => t.id !== tile.id)
+      .reduce((sum, t) => sum + (owner.houses[t.id] || 0), 0);
+
+    const totalBoostUnits = otherPropsCount + otherSameColorHousesCount;
+
+    if (totalBoostUnits > 0) {
       const boostMultiplier =
-        1 + (sameColorOwnedCount - 1) * (settings.sameColorRentBoostPercent / 100);
+        1 + totalBoostUnits * (settings.sameColorRentBoostPercent / 100);
       rent = Math.ceil(rent * boostMultiplier);
     }
   }
