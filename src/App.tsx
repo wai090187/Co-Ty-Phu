@@ -12,7 +12,7 @@ import { GameModalsContainer } from './modules/game/components/GameModalsContain
 import { CharacterEventStage } from './components/Effects/CharacterEventStage';
 import { GameSaveLoadModalWrapper } from './modules/game/components/GameSaveLoadModalWrapper';
 import { GameCheatModalWrapper } from './modules/game/components/GameCheatModalWrapper';
-
+import { ConfirmExitModal } from './modules/game/components/ConfirmExitModal';
 import { Character } from './types/game';
 import { GameQuickSaveToast } from './modules/game/components/GameQuickSaveToast';
 import { useAppSaveLoad } from './modules/game/hooks/useAppSaveLoad';
@@ -21,28 +21,19 @@ import { useGlobalKeyboardShortcuts } from './hooks/useGlobalKeyboardShortcuts';
 import { getAvailableTargetPlayers } from './modules/game/utils/targetAbilityHelper';
 
 export default function App() {
-
   const game = useMonopolyGame();
   const {
-    playerConfigs,
-    setPlayerConfigs,
-    pickingCharacterPlayerIdx,
-    setPickingCharacterPlayerIdx,
-    handlePlayerCountChange,
-    updatePlayerConfig,
+    playerConfigs, setPlayerConfigs, pickingCharacterPlayerIdx,
+    setPickingCharacterPlayerIdx, handlePlayerCountChange, updatePlayerConfig,
   } = useGameSetupState();
 
   const [showSettings, setShowSettings] = useState(false);
+  const [showConfirmExit, setShowConfirmExit] = useState(false);
   const [showInventoryPlayerId, setShowInventoryPlayerId] = useState<number | null>(null);
 
   const {
-    saveGame,
-    showSaveLoadModal,
-    setShowSaveLoadModal,
-    quickSaveToast,
-    handleSaveToSlot,
-    handleQuickSave,
-    handleLoadFromSlot,
+    saveGame, showSaveLoadModal, setShowSaveLoadModal, quickSaveToast,
+    handleSaveToSlot, handleQuickSave, handleLoadFromSlot,
   } = useAppSaveLoad({ game, playerConfigs, setPlayerConfigs });
 
 
@@ -63,6 +54,7 @@ export default function App() {
     showInventoryPlayerId !== null ||
     showSettings ||
     showSaveLoadModal ||
+    showConfirmExit ||
     game.isCheatModalOpen ||
     pickingCharacterPlayerIdx !== null ||
     !!game.activeTargetAbility ||
@@ -97,6 +89,7 @@ export default function App() {
         hasActiveCheat={
           !!(game.cheatNextDice || game.cheatNextChanceCardId || game.cheatNextChestCardId)
         }
+        onReturnToMainMenu={() => setShowConfirmExit(true)}
       />
 
       {!game.isPlaying ? (
@@ -176,13 +169,19 @@ export default function App() {
         offeredStationAbilities={game.offeredStationAbilities}
         consumableShop={game.consumableShop}
         onBuyConsumableAbility={game.buyConsumableAbility}
-        onCloseStationModal={() => game.setActiveStationModal(null)}
+        onCloseStationModal={() => {
+          game.setActiveStationModal(null);
+          game.setOfferedStationAbilities([]);
+        }}
         activeUtilityModal={game.activeUtilityModal}
         offeredUtilityAbilities={game.offeredUtilityAbilities}
         permanentShop={game.permanentShop}
         onBuyPermanentAbility={game.buyPermanentAbility}
         onSellPermanentAbility={game.sellPermanentAbility}
-        onCloseUtilityModal={() => game.setActiveUtilityModal(null)}
+        onCloseUtilityModal={() => {
+          game.setActiveUtilityModal(null);
+          game.setOfferedUtilityAbilities([]);
+        }}
         activeDrawnCard={game.activeDrawnCard}
         onExecuteDrawnCard={game.executeDrawnCard}
         onCloseDrawnCard={() => game.setActiveDrawnCard(null)}
@@ -278,10 +277,17 @@ export default function App() {
         onClose={() => setShowSaveLoadModal(false)}
       />
 
+      <ConfirmExitModal
+        isOpen={showConfirmExit}
+        onConfirm={() => {
+          setShowConfirmExit(false);
+          game.returnToMainMenu();
+        }}
+        onCancel={() => setShowConfirmExit(false)}
+      />
 
       <GameCheatModalWrapper game={game} />
       <GameQuickSaveToast message={quickSaveToast} />
     </div>
   );
 }
-

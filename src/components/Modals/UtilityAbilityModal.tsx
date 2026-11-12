@@ -35,8 +35,10 @@ export const UtilityAbilityModal: React.FC<Props> = ({
     netCost: number;
   } | null>(null);
 
+  const offeredList = abilities.slice(0, 2);
   const ownedAbilities = allPermanents.filter(a => player.permanentAbilities.includes(a.id));
-  const selectedAbility = abilities[selectedIndex] || null;
+  const selectedAbility = offeredList[selectedIndex] || null;
+
 
   const handleAttemptBuy = (ability: PermanentAbility) => {
     if (ownedAbilities.length > 0) {
@@ -77,13 +79,13 @@ export const UtilityAbilityModal: React.FC<Props> = ({
         }
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
-        if (abilities.length > 0) {
-          setSelectedIndex(prev => (prev + 1) % abilities.length);
+        if (offeredList.length > 0) {
+          setSelectedIndex(prev => (prev + 1) % offeredList.length);
         }
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        if (abilities.length > 0) {
-          setSelectedIndex(prev => (prev - 1 + abilities.length) % abilities.length);
+        if (offeredList.length > 0) {
+          setSelectedIndex(prev => (prev - 1 + offeredList.length) % offeredList.length);
         }
       } else if (e.code === 'Space' || e.key === ' ') {
         e.preventDefault();
@@ -111,7 +113,7 @@ export const UtilityAbilityModal: React.FC<Props> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
-    abilities,
+    offeredList,
     selectedIndex,
     selectedAbility,
     player.cash,
@@ -161,7 +163,7 @@ export const UtilityAbilityModal: React.FC<Props> = ({
         {/* Content Body */}
         <div className="p-4 overflow-y-auto flex-1 flex flex-col gap-4">
           <UtilityOfferedAbilitiesSection
-            abilities={abilities}
+            abilities={offeredList}
             ownedAbilities={ownedAbilities}
             player={player}
             selectedIndex={selectedIndex}

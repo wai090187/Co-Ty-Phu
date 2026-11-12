@@ -143,5 +143,33 @@ export const useTurnManager = (ctx: TurnManagerContext) => {
     });
   }, [ctx]);
 
-  return { startNewGame, endTurn };
+  const returnToMainMenu = useCallback(() => {
+    ctx.closeAllModals();
+    ctx.setIsPlaying(false);
+    ctx.setWinner(null);
+    ctx.setPlayers([]);
+    ctx.setTurnIndex(0);
+    ctx.setCurrentRound(1);
+    ctx.setCanRoll(true);
+    ctx.setHasMovedThisTurn(false);
+    ctx.setUpgradesThisTurn(0);
+    ctx.setConsecutiveDoubles(0);
+    ctx.setHasPendingExtraRoll?.(false);
+    ctx.setLogs([]);
+    if (ctx.setInvestigator) {
+      ctx.setInvestigator({
+        enabled: true,
+        active: false,
+        position: 0,
+        lapsCompleted: 0,
+        currentAbilityId: '',
+        usedAbilityIds: [],
+      });
+    }
+    if (ctx.setIsInvestigatorTurn) {
+      ctx.setIsInvestigatorTurn(false);
+    }
+  }, [ctx]);
+
+  return { startNewGame, endTurn, returnToMainMenu };
 };

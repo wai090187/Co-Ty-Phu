@@ -8,8 +8,10 @@ import { sounds } from '../../../utils/soundEngine';
 import { INITIAL_CHANCE_CARDS, INITIAL_CHEST_CARDS } from '../../../data/cards';
 import { drawRandomCardWithReset } from './cardDeckHelper';
 import { filterAbilitiesForAI } from './abilityFilterHelper';
+import { getOfferedStationAbilities, getOfferedUtilityAbilities } from './offeredAbilitiesHelper';
 
 export { handleSameTileAndNeighborToll } from './landingNeighborTollHelper';
+
 
 export interface SpecialTilesContext {
   tile: Tile;
@@ -110,24 +112,18 @@ export function handleCornerAndSpecialTiles(ctx: SpecialTilesContext) {
     }
 
     sounds.purchase();
-    const unowned = consumableShop.filter(a => (a.quantity ?? 1) > 0);
-    const candidatePool = player.isAI
-      ? filterAbilitiesForAI(unowned, { requireAutoTrigger: true })
-      : unowned;
-    const shuffled = [...candidatePool].sort(() => 0.5 - Math.random());
-    setOfferedStationAbilities(shuffled.slice(0, 2));
+    const offeredStation = getOfferedStationAbilities(consumableShop, player.isAI);
+    setOfferedStationAbilities(offeredStation);
     setActiveStationModal(tile);
   }
   // Utility Tile
   else if (tile.type === 'utility') {
     sounds.purchase();
-    const unowned = permanentShop.filter(
-      a => (a.quantity ?? 1) > 0 && !prevPlayers.some(p => p.permanentAbilities.includes(a.id))
-    );
-    const shuffled = [...unowned].sort(() => 0.5 - Math.random());
-    setOfferedUtilityAbilities(shuffled.slice(0, 2));
+    const offeredUtility = getOfferedUtilityAbilities(permanentShop, prevPlayers, player.id);
+    setOfferedUtilityAbilities(offeredUtility);
     setActiveUtilityModal(tile);
   }
+
   // Tax Tile
   else if (tile.type === 'tax') {
     const isTaxFree = player.hasFreeTaxNextTurn || player.permanentAbilities.includes('perm-tax-immunity');

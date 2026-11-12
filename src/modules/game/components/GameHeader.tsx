@@ -9,6 +9,7 @@ interface Props {
   onQuickSave?: () => void;
   onOpenCheat?: () => void;
   hasActiveCheat?: boolean;
+  onReturnToMainMenu?: () => void;
 }
 
 export const GameHeader: React.FC<Props> = ({
@@ -19,6 +20,7 @@ export const GameHeader: React.FC<Props> = ({
   onQuickSave,
   onOpenCheat,
   hasActiveCheat = false,
+  onReturnToMainMenu,
 }) => {
   return (
     <header className="bg-slate-900 text-white border-b-2 border-amber-600 px-4 py-2.5 flex items-center justify-between shadow-md z-30">
@@ -97,6 +99,17 @@ export const GameHeader: React.FC<Props> = ({
           <span>⚙️</span>
           <span className="hidden sm:inline">Cài Đặt</span>
         </button>
+
+        {isPlaying && onReturnToMainMenu && (
+          <button
+            onClick={onReturnToMainMenu}
+            className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-rose-950/80 hover:bg-rose-800 text-rose-200 hover:text-white font-bold text-xs flex items-center gap-1.5 transition-colors border border-rose-700/60 shadow-xs"
+            title="Thoát ván đấu và trở về Menu chính (xóa ván đấu)"
+          >
+            <span>🏠</span>
+            <span className="hidden sm:inline">Menu Chính</span>
+          </button>
+        )}
       </div>
     </header>
   );

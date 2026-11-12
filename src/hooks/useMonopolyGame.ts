@@ -6,11 +6,8 @@
 import { useEffect, useCallback } from 'react';
 import { Player, Tile } from '../types/game';
 import { sounds } from '../utils/soundEngine';
-import {
-  getBaseBailFee,
-  canPlayerPayBailCheck,
-  calculatePropertyRent,
-} from '../modules/property/utils/rentCalculator';
+import { TILES } from '../data/tiles';
+import { getBaseBailFee, canPlayerPayBailCheck, calculatePropertyRent } from '../modules/property/utils/rentCalculator';
 import { useGameState, SetupPlayerConfig } from '../modules/game/hooks/useGameState';
 import { useGameEvents } from '../modules/game/hooks/useGameEvents';
 import { useTurnManager } from '../modules/game/hooks/useTurnManager';
@@ -199,7 +196,7 @@ export const useMonopolyGame = () => {
     state.setAiActionModalInfo(null);
   }, [state]);
 
-  const { startNewGame, endTurn } = useTurnManager({
+  const { startNewGame, endTurn, returnToMainMenu: returnToMainMenuInternal } = useTurnManager({
     turnIndex: state.turnIndex,
     currentRound: state.currentRound,
     startingCash: state.settings.startingCash,
@@ -221,6 +218,22 @@ export const useMonopolyGame = () => {
     setHasPendingExtraRoll: state.setHasPendingExtraRoll,
     closeAllModals,
   });
+
+  const returnToMainMenu = useCallback(() => {
+    if (state.moveTimerRef.current) {
+      clearInterval(state.moveTimerRef.current);
+      state.moveTimerRef.current = null;
+    }
+    state.setIsMovingStepByStep(false);
+    state.setTiles(TILES.map(t => ({ ...t, owner: undefined, houses: 0, mortgaged: false })));
+    state.setOfferedStationAbilities([]);
+    state.setOfferedUtilityAbilities([]);
+    state.setCashTransferEvent(null);
+    state.setCharacterEvent(null);
+    state.setPendingDiceBoost(0);
+    state.setPendingDestroyHousePlayerId(null);
+    returnToMainMenuInternal();
+  }, [state, returnToMainMenuInternal]);
 
   // Background AI & Investigator loops
   useGameAutonomousLoops({
@@ -254,6 +267,7 @@ export const useMonopolyGame = () => {
     ...state,
     activePlayer,
     startNewGame,
+    returnToMainMenu,
     rollDice,
     skipMovement,
     endTurn,

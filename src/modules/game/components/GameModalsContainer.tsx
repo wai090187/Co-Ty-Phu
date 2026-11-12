@@ -11,6 +11,11 @@ import { TargetPlayerModal } from '../../../components/Modals/TargetPlayerModal'
 import { PermanentTriggerModal } from '../../../components/Modals/PermanentTriggerModal';
 import { AiActionModal } from '../../../components/Modals/AiActionModal';
 import { GameOverModal } from '../../../components/Modals/GameOverModal';
+import {
+  getOfferedStationAbilities,
+  getOfferedUtilityAbilities,
+} from '../utils/offeredAbilitiesHelper';
+
 
 export const GameModalsContainer: React.FC<GameModalsProps> = ({
   activePropertyModalTile,
@@ -119,7 +124,11 @@ export const GameModalsContainer: React.FC<GameModalsProps> = ({
         <StationAbilityModal
           tile={activeStationModal}
           player={activePlayer!}
-          abilities={offeredStationAbilities.length > 0 ? offeredStationAbilities : consumableShop}
+          abilities={
+            offeredStationAbilities.length > 0
+              ? offeredStationAbilities.slice(0, 2)
+              : getOfferedStationAbilities(consumableShop, activePlayer?.isAI)
+          }
           onBuyAbility={onBuyConsumableAbility}
           onClose={onCloseStationModal}
           hasVipDiscount={activePlayer?.permanentAbilities.includes('perm-station-vip')}
@@ -131,13 +140,18 @@ export const GameModalsContainer: React.FC<GameModalsProps> = ({
         <UtilityAbilityModal
           tile={activeUtilityModal}
           player={activePlayer!}
-          abilities={offeredUtilityAbilities.length > 0 ? offeredUtilityAbilities : permanentShop}
+          abilities={
+            offeredUtilityAbilities.length > 0
+              ? offeredUtilityAbilities.slice(0, 2)
+              : getOfferedUtilityAbilities(permanentShop, players, activePlayer?.id)
+          }
           allPermanents={permanentShop}
           onBuyAbility={onBuyPermanentAbility}
           onSellAbility={onSellPermanentAbility}
           onClose={onCloseUtilityModal}
         />
       )}
+
 
       {/* 4. Drawn Card Modal */}
       {activeDrawnCard && (
